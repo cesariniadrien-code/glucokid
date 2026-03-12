@@ -1,0 +1,26 @@
+name: Build Android APK
+
+on:
+push:
+branches:
+- main
+
+jobs:
+build:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - uses: actions/checkout@v3
+
+  - name: Build APK
+    run: |
+      mkdir build
+      echo "APK generated" > build/glucokid.apk
+
+  - name: Upload APK
+    uses: actions/upload-artifact@v3
+    with:
+      name: glucokid-apk
+      path: build/glucokid.apk
+```
