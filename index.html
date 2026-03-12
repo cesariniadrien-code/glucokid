@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>GlucoKid 🌟</title>
+<!-- PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GlucoKid">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0288d1">
+<meta name="description" content="Application de suivi des glucides pour enfants diabétiques">
+<link rel="manifest" id="pwa-manifest">
+<!-- Icône Apple (générée via canvas) -->
+<link rel="apple-touch-icon" id="apple-icon">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+<!-- ZXing for iOS Safari barcode scanning -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js"></script>
+<style>
+:root {
+  --sky:#4fc3f7; --sky-d:#0288d1;
+  --sun:#ffca28; --sun-d:#f9a825;
+  --green:#66bb6a; --green-d:#388e3c;
+  --pink:#f48fb1; --pink-d:#c2185b;
+  --purple:#ce93d8; --purple-d:#7b1fa2;
+  --orange:#ffb74d; --orange-d:#e65100;
+  --red:#ef5350;
+  --bg:#e8f4fd; --card:#fff; --surface2:#f5f9ff;
+  --text:#1a237e; --text-m:#5c6bc0; --text-l:#9fa8da;
+  --border:#e3f2fd; --radius:20px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(79,195,247,.15) 0%,transparent 40%),radial-gradient(circle at 90% 80%,rgba(255,202,40,.12) 0%,transparent 40%);pointer-events:none;z-index:0}
+
+/* HEADER */
+header{background:linear-gradient(135deg,var(--sky-d),#1565c0);padding:13px 16px 11px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(2,136,209,.3)}
+.logo{font-family:'Baloo 2',cursive;font-size:25px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.2)}
+.logo span{color:var(--sun)}
+.header-right{display:flex;align-items:center;gap:8px}
+.date-bubble{background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px}
+#btn-settings{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+#btn-settings:hover{background:rgba(255,255,255,.35)}
+
+/* NAV */
+nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:sticky;top:60px;z-index:99;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.nav-btn{flex:1;padding:11px 2px 9px;font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;color:var(--text-l);border:none;background:transparent;cursor:pointer;border-bottom:4px solid transparent;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav-btn .ni{font-size:20px;transition:transform .2s}
+.nav-btn.active{color:var(--sky-d);border-bottom-color:var(--sky-d)}
+.nav-btn.active .ni{transform:scale(1.2)}
+
+#app{flex:1;position:relative;z-index:1;padding-bottom:24px}
+.page{display:none}
+.page.active{display:block}
+
+/* MASCOT */
+.mascot-bar{background:linear-gradient(135deg,#fff9c4,#fff3e0);border-bottom:3px solid #ffe082;padding:11px 14px;display:flex;align-items:center;gap:11px}
+.mascot{font-size:44px;animation:bounce 2.5s ease-in-out infinite;flex-shrink:0}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.mascot-speech{background:#fff;border-radius:16px;padding:9px 13px;font-size:13px;font-weight:700;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08);position:relative;flex:1;line-height:1.4}
+.mascot-speech::before{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-right-color:#fff;border-left:0}
+
+/* JOURNAL */
+#page-journal{padding:0 12px 12px}
+.gluc-meter{background:linear-gradient(135deg,var(--sky-d),var(--purple-d));border-radius:22px;padding:18px;margin:12px 0 12px;text-align:center;box-shadow:0 8px 24px rgba(2,136,209,.3);color:#fff}
+.gluc-total{font-family:'Baloo 2',cursive;font-size:60px;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.2)}
+.gluc-total span{font-size:22px;opacity:.7;font-family:'Nunito',sans-serif;font-weight:700}
+.gluc-label{font-size:12px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.gluc-target{font-size:13px;font-weight:800;margin-top:6px;color:rgba(255,255,255,.85)}
+.meal-stats{display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.meal-stat{background:rgba(255,255,255,.2);border-radius:12px;padding:7px 11px;text-align:center;backdrop-filter:blur(4px)}
+.meal-stat-val{font-family:'Baloo 2',cursive;font-size:18px;color:#fff;line-height:1}
+.meal-stat-lbl{font-size:9px;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase;margin-top:1px}
+
+.meal-card{background:var(--card);border-radius:var(--radius);margin-bottom:11px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.meal-card-header{padding:11px 14px;display:flex;align-items:center;justify-content:space-between}
+.meal-card-title{font-family:'Baloo 2',cursive;font-size:17px;display:flex;align-items:center;gap:7px}
+.meal-badge{font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;color:#fff}
+.meal-card-body{padding:0 11px 11px}
+.food-chip{display:flex;align-items:center;gap:9px;background:var(--bg);border-radius:13px;padding:9px 11px;margin-bottom:6px}
+.food-chip-icon{font-size:26px;flex-shrink:0}
+.food-chip-info{flex:1;min-width:0}
+.food-chip-name{font-weight:800;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.food-chip-detail{font-size:11px;color:var(--text-m);margin-top:1px}
+.food-chip-time{font-size:10px;color:var(--text-l);font-weight:700;margin-top:1px}
+.food-chip-gluc{font-family:'Baloo 2',cursive;font-size:20px;color:var(--sky-d);flex-shrink:0}
+.food-chip-gluc small{font-family:'Nunito',sans-serif;font-size:10px;color:var(--text-l);font-weight:700}
+.btn-del-chip{background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-l);padding:2px 4px;border-radius:8px;transition:all .15s;flex-shrink:0}
+.btn-del-chip:hover{color:var(--red);background:#fce4ec}
+.btn-add-to-meal{width:100%;padding:11px;background:var(--bg);border:3px dashed var(--border);border-radius:13px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--text-m);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-add-to-meal:hover{border-color:var(--sky);color:var(--sky-d);background:#e1f5fe}
+.empty-chip{text-align:center;color:var(--text-l);font-size:12px;font-weight:700;padding:7px;font-style:italic}
+
+.theme-matin .meal-card-header{background:linear-gradient(135deg,#fff9c4,#fff3e0)}
+.theme-matin .meal-card-title{color:#e65100}
+.theme-matin .meal-badge{background:var(--orange-d)}
+.theme-midi .meal-card-header{background:linear-gradient(135deg,#e8f5e9,#f1f8e9)}
+.theme-midi .meal-card-title{color:var(--green-d)}
+.theme-midi .meal-badge{background:var(--green-d)}
+.theme-soir .meal-card-header{background:linear-gradient(135deg,#ede7f6,#e8eaf6)}
+.theme-soir .meal-card-title{color:var(--purple-d)}
+.theme-soir .meal-badge{background:var(--purple-d)}
+.theme-collation .meal-card-header{background:linear-gradient(135deg,#fce4ec,#f3e5f5)}
+.theme-collation .meal-card-title{color:var(--pink-d)}
+.theme-collation .meal-badge{background:var(--pink-d)}
+
+/* SEARCH */
+#page-search{padding:12px}
+.search-box{background:var(--card);border-radius:var(--radius);padding:13px;box-shadow:0 4px 16px rgba(0,0,0,.07);margin-bottom:12px}
+.search-row{display:flex;gap:9px;align-items:center;background:var(--bg);border-radius:15px;padding:9px 13px;border:3px solid var(--border);transition:border-color .2s;margin-bottom:9px}
+.search-row:focus-within{border-color:var(--sky)}
+.search-row input{flex:1;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:16px;font-weight:700;background:transparent;color:var(--text)}
+.search-row input::placeholder{color:var(--text-l);font-weight:600}
+.cat-scroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-pill{flex-shrink:0;padding:6px 13px;border-radius:20px;font-size:12px;font-weight:800;border:2.5px solid var(--border);background:var(--card);color:var(--text-m);cursor:pointer;transition:all .15s;white-space:nowrap}
+.cat-pill.active{background:var(--sky-d);color:#fff;border-color:var(--sky-d)}
+
+.food-grid{display:flex;flex-direction:column;gap:7px}
+.food-card{background:var(--card);border:3px solid var(--border);border-radius:15px;padding:11px 13px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.food-card:hover,.food-card:active{border-color:var(--sky);background:#e1f5fe;transform:scale(1.01)}
+.food-card-icon{font-size:30px;flex-shrink:0}
+.food-card-info{flex:1;min-width:0}
+.food-card-name{font-weight:800;font-size:14px;color:var(--text)}
+.food-card-cat{font-size:11px;color:var(--text-m);font-weight:600;margin-top:1px}
+.food-card-gluc{font-family:'Baloo 2',cursive;font-size:24px;color:var(--sky-d);flex-shrink:0;line-height:1}
+.food-card-gluc small{display:block;font-family:'Nunito',sans-serif;font-size:10px;color:var(--text-l);font-weight:700;text-align:right}
+.food-card-tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.tag-off{background:#f3e5f5;color:var(--purple-d)}
+
+/* OFF */
+.off-box{background:var(--card);border-radius:var(--radius);padding:13px;box-shadow:0 4px 16px rgba(0,0,0,.07);margin-bottom:12px}
+.off-title{font-family:'Baloo 2',cursive;font-size:16px;color:var(--text);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.off-row{display:flex;gap:8px;margin-bottom:8px}
+.off-input{flex:1;padding:10px 13px;border:3px solid var(--border);border-radius:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;background:var(--bg);transition:border-color .2s;color:var(--text)}
+.off-input:focus{border-color:var(--purple)}
+.btn-off{padding:10px 14px;background:var(--purple-d);color:#fff;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-off:hover{background:var(--purple)}
+.btn-scan{width:100%;padding:12px;background:linear-gradient(135deg,var(--orange),var(--sun));color:#fff;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 4px 12px rgba(255,152,0,.35)}
+.btn-scan:hover{transform:scale(1.02)}
+.off-status{font-size:12px;font-weight:700;color:var(--text-m);padding:5px 3px;text-align:center;min-height:24px}
+#scanner-container{display:none;border-radius:15px;overflow:hidden;position:relative;background:#000;margin:8px 0}
+#scanner-container video{width:100%;display:block}
+#scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scanner-frame{width:65%;aspect-ratio:2/1;border:4px solid var(--sun);border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,.5)}
+#btn-stop-scan{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;padding:6px 13px;cursor:pointer;font-family:'Nunito',sans-serif}
+
+/* CALCULATRICE */
+#page-calc{padding:12px}
+.calc-card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.07);margin-bottom:12px}
+.calc-title{font-family:'Baloo 2',cursive;font-size:19px;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.calc-sub{font-size:12px;color:var(--text-m);font-weight:600;margin-bottom:16px;line-height:1.5}
+.calc-field{margin-bottom:14px}
+.calc-label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text-m);margin-bottom:6px;display:block}
+.calc-input{width:100%;padding:13px 16px;border:3px solid var(--border);border-radius:15px;font-family:'Baloo 2',cursive;font-size:28px;text-align:center;outline:none;background:var(--bg);color:var(--text);transition:border-color .2s}
+.calc-input:focus{border-color:var(--sky)}
+.calc-result-box{background:linear-gradient(135deg,var(--sky-d),var(--purple-d));border-radius:18px;padding:20px;text-align:center;margin-top:6px}
+.calc-result-label{font-size:13px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.calc-result-val{font-family:'Baloo 2',cursive;font-size:52px;color:#fff;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.2)}
+.calc-result-unit{font-size:16px;color:rgba(255,255,255,.7);font-weight:700;margin-top:4px}
+.calc-divider{border:none;border-top:2px dashed var(--border);margin:18px 0}
+/* Dose calculator */
+.dose-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.dose-result-box{background:linear-gradient(135deg,#e65100,#ff8f00);border-radius:18px;padding:16px;text-align:center}
+.dose-result-val{font-family:'Baloo 2',cursive;font-size:46px;color:#fff;line-height:1}
+.dose-result-label{font-size:12px;color:rgba(255,255,255,.8);font-weight:700;margin-top:4px}
+.calc-note{background:#fffde7;border:2px solid #ffe082;border-radius:12px;padding:10px 13px;font-size:12px;color:#5d4037;font-weight:700;line-height:1.5;margin-top:10px}
+
+/* HISTORIQUE */
+#page-history{padding:12px}
+.history-day{background:var(--card);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.history-day-header{padding:13px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s}
+.history-day-header:hover{background:var(--bg)}
+.history-day-date{font-family:'Baloo 2',cursive;font-size:17px;color:var(--text);display:flex;align-items:center;gap:8px}
+.history-day-badge{font-family:'Baloo 2',cursive;font-size:20px;color:var(--sky-d)}
+.history-day-body{padding:0 12px 12px;border-top:2px solid var(--bg)}
+.history-entry{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:11px;background:var(--bg);margin-bottom:5px}
+.history-entry-icon{font-size:22px;flex-shrink:0}
+.history-entry-info{flex:1;min-width:0}
+.history-entry-name{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-entry-detail{font-size:11px;color:var(--text-m);margin-top:1px}
+.history-entry-gluc{font-family:'Baloo 2',cursive;font-size:18px;color:var(--sky-d);flex-shrink:0}
+.history-empty{text-align:center;color:var(--text-l);font-size:13px;font-weight:700;padding:20px;font-style:italic}
+.week-chart{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.week-chart-title{font-family:'Baloo 2',cursive;font-size:17px;color:var(--text);margin-bottom:12px}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:80px}
+.chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.chart-bar{width:100%;border-radius:8px 8px 0 0;background:linear-gradient(180deg,var(--sky),var(--sky-d));min-height:4px;transition:height .5s ease}
+.chart-bar.today{background:linear-gradient(180deg,var(--sun),var(--orange-d))}
+.chart-bar-day{font-size:10px;font-weight:800;color:var(--text-m)}
+.chart-bar-val{font-size:10px;font-weight:800;color:var(--text-l)}
+
+/* RÉGLAGES */
+#page-settings{padding:12px}
+.settings-section{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.settings-title{font-family:'Baloo 2',cursive;font-size:17px;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:13px;margin-bottom:8px}
+.setting-info .setting-label{font-size:14px;font-weight:800;color:var(--text)}
+.setting-info .setting-desc{font-size:11px;color:var(--text-m);font-weight:600;margin-top:2px}
+.setting-ctrl input{width:90px;padding:8px 10px;border:3px solid var(--border);border-radius:11px;font-family:'Baloo 2',cursive;font-size:20px;text-align:center;outline:none;background:#fff;color:var(--text);transition:border-color .2s}
+.setting-ctrl input:focus{border-color:var(--sky)}
+.btn-save-settings{width:100%;padding:14px;background:linear-gradient(135deg,var(--sky-d),var(--purple-d));color:#fff;border:none;border-radius:16px;font-family:'Baloo 2',cursive;font-size:20px;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(2,136,209,.35);margin-top:4px}
+.btn-save-settings:hover{transform:scale(1.02)}
+.btn-danger{width:100%;padding:12px;background:#ffebee;border:3px solid #ffcdd2;border-radius:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#c62828;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-danger:hover{background:#fce4ec;border-color:#ef9a9a}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,35,126,.5);z-index:500;backdrop-filter:blur(6px);align-items:flex-end;justify-content:center}
+.modal-overlay.visible{display:flex}
+.modal{background:var(--card);border-radius:28px 28px 0 0;width:100%;max-width:700px;padding:18px 18px 34px;box-shadow:0 -12px 40px rgba(0,0,0,.2);animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.modal-handle{width:40px;height:5px;background:var(--border);border-radius:3px;margin:0 auto 14px}
+.modal-food-header{display:flex;align-items:center;gap:13px;background:var(--bg);border-radius:17px;padding:13px 15px;margin-bottom:16px}
+.modal-food-icon{font-size:42px}
+.modal-food-info{flex:1}
+.modal-food-name{font-family:'Baloo 2',cursive;font-size:19px;color:var(--text);line-height:1.2}
+.modal-food-g100{font-size:12px;color:var(--text-m);font-weight:700;margin-top:3px}
+.modal-gluc-res{font-family:'Baloo 2',cursive;font-size:30px;color:var(--sky-d);line-height:1;text-align:right;flex-shrink:0}
+.modal-gluc-res small{display:block;font-family:'Nunito',sans-serif;font-size:11px;color:var(--text-l);font-weight:700}
+.modal-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-m);margin-bottom:7px}
+.qty-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.qty-btn{width:50px;height:50px;border-radius:50%;border:3px solid var(--border);background:var(--bg);font-size:26px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text);flex-shrink:0}
+.qty-btn:hover{border-color:var(--sky);background:#e1f5fe;color:var(--sky-d)}
+.qty-input{flex:1;text-align:center;font-family:'Baloo 2',cursive;font-size:30px;border:3px solid var(--border);border-radius:15px;padding:9px;outline:none;background:var(--bg);color:var(--text);transition:border-color .2s}
+.qty-input:focus{border-color:var(--sky)}
+.meal-selector{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.meal-sel-btn{padding:11px 7px;border-radius:15px;border:3px solid var(--border);background:var(--bg);font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;text-align:center;color:var(--text-m);display:flex;flex-direction:column;align-items:center;gap:3px}
+.meal-sel-btn .ms-icon{font-size:22px}
+.meal-sel-btn.selected{border-color:var(--sky-d);background:#e1f5fe;color:var(--sky-d);transform:scale(1.03)}
+.btn-confirm{width:100%;padding:15px;background:linear-gradient(135deg,var(--sky-d),var(--purple-d));color:#fff;border:none;border-radius:17px;font-family:'Baloo 2',cursive;font-size:21px;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(2,136,209,.4)}
+.btn-confirm:hover{transform:scale(1.02)}
+.btn-cancel{width:100%;padding:11px;background:var(--bg);border:3px solid var(--border);border-radius:15px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--text-m);cursor:pointer;margin-top:9px;transition:all .15s}
+
+/* CONFETTI */
+@keyframes confettiFly{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(-100px) rotate(360deg);opacity:0}}
+.confetti-piece{position:fixed;pointer-events:none;z-index:9999;width:10px;height:10px;border-radius:2px;animation:confettiFly .9s ease-out forwards}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:30px 20px;color:var(--text-l)}
+.empty-state .e-icon{font-size:48px;margin-bottom:9px;animation:wiggle 2s ease-in-out infinite;display:block}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+.empty-state p{font-size:13px;font-weight:700;line-height:1.6}
+
+/* SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:3px solid rgba(0,0,0,.1);border-top-color:var(--sky-d);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Gluco<span>Kid</span> 🌟</div>
+  <div class="header-right">
+    <div class="date-bubble" id="header-date">—</div>
+    <button id="btn-settings" onclick="showPage('settings')" title="Réglages">⚙️</button>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showPage('journal')"><span class="ni">📋</span>Repas</button>
+  <button class="nav-btn" onclick="showPage('search')"><span class="ni">🔍</span>Chercher</button>
+  <button class="nav-btn" onclick="showPage('calc')"><span class="ni">🧮</span>Calcul</button>
+  <button class="nav-btn" onclick="showPage('history')"><span class="ni">📅</span>Historique</button>
+</nav>
+
+<div id="app">
+
+  <!-- JOURNAL -->
+  <div id="page-journal" class="page active">
+    <div class="mascot-bar">
+      <div class="mascot">🦊</div>
+      <div class="mascot-speech" id="mascot-msg">Bonjour ! Qu'est-ce que tu manges ? 😊</div>
+    </div>
+    <div style="padding:0 12px">
+      <div class="gluc-meter">
+        <div class="gluc-total" id="total-gluc">0 <span>g</span></div>
+        <div class="gluc-label">glucides aujourd'hui</div>
+        <div class="gluc-target" id="gluc-target-display"></div>
+        <div class="meal-stats">
+          <div class="meal-stat"><div class="meal-stat-val" id="stat-matin">0g</div><div class="meal-stat-lbl">🌅 Matin</div></div>
+          <div class="meal-stat"><div class="meal-stat-val" id="stat-midi">0g</div><div class="meal-stat-lbl">☀️ Midi</div></div>
+          <div class="meal-stat"><div class="meal-stat-val" id="stat-soir">0g</div><div class="meal-stat-lbl">🌙 Soir</div></div>
+          <div class="meal-stat"><div class="meal-stat-val" id="stat-collation">0g</div><div class="meal-stat-lbl">🍎 Goûter</div></div>
+        </div>
+      </div>
+      <div id="meals-container"></div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div id="page-search" class="page">
+    <div style="padding:12px">
+      <div class="search-box">
+        <div class="search-row">
+          <span style="font-size:22px">🔍</span>
+          <input type="text" id="search-input" placeholder="Banane, riz, pain…" oninput="onSearch()" autocomplete="off">
+        </div>
+        <div class="cat-scroll" id="cat-chips"></div>
+      </div>
+      <div id="search-results" class="food-grid"></div>
+
+      <div class="off-box">
+        <div class="off-title">🌍 Open Food Facts</div>
+        <div class="off-row">
+          <input class="off-input" type="text" id="off-search-input" placeholder="Nom du produit…" onkeydown="if(event.key==='Enter')searchOFF()">
+          <button class="btn-off" onclick="searchOFF()">Go !</button>
+        </div>
+        <button class="btn-scan" onclick="toggleScanner()">📷 Scanner le code-barres</button>
+        <div id="scanner-container">
+          <video id="scanner-video" autoplay muted playsinline></video>
+          <div id="scanner-overlay"><div class="scanner-frame"></div></div>
+          <button id="btn-stop-scan" onclick="stopScanner()">✕ Arrêter</button>
+        </div>
+        <div id="off-status" class="off-status"></div>
+        <div id="off-results" class="food-grid" style="margin-top:6px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULATRICE -->
+  <div id="page-calc" class="page">
+    <div style="padding:12px">
+      <div class="calc-card">
+        <div class="calc-title">🧮 Calculatrice glucides</div>
+        <div class="calc-sub">Ajoute chaque aliment — le total s'accumule ! 🍽️</div>
+
+        <div class="calc-field" style="margin-bottom:10px">
+          <label class="calc-label">Nom de l'aliment (optionnel)</label>
+          <input class="calc-input" type="text" id="calc-name" placeholder="ex : Pain, Banane…" style="font-family:'Nunito',sans-serif;font-size:18px;font-weight:700" autocomplete="off">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="calc-field">
+            <label class="calc-label">Glucides / 100 g</label>
+            <input class="calc-input" type="number" id="calc-gluc100" placeholder="ex : 55" min="0" max="100" oninput="calcGlucPreview()" inputmode="decimal">
+          </div>
+          <div class="calc-field">
+            <label class="calc-label">Quantité (g)</label>
+            <input class="calc-input" type="number" id="calc-qty" placeholder="ex : 150" min="0" oninput="calcGlucPreview()" inputmode="decimal">
+          </div>
+        </div>
+
+        <div id="calc-preview-box" style="display:none;background:var(--bg);border-radius:14px;padding:11px 14px;margin-bottom:10px;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-size:13px;font-weight:700;color:var(--text-m)">Cette portion :</span>
+          <span style="font-family:'Baloo 2',cursive;font-size:28px;color:var(--sky-d)" id="calc-preview-val">—</span>
+          <span style="font-size:13px;font-weight:700;color:var(--text-m)">g de glucides</span>
+        </div>
+
+        <button id="btn-calc-add" onclick="calcAddItem()" disabled style="width:100%;padding:13px;background:var(--sky-d);color:#fff;border:none;border-radius:15px;font-family:'Baloo 2',cursive;font-size:19px;cursor:pointer;transition:all .2s;margin-bottom:14px;opacity:.4">
+          ＋ Ajouter au total
+        </button>
+
+        <div id="calc-items-list"></div>
+
+        <div id="calc-total-box" style="display:none">
+          <div class="calc-result-box">
+            <div class="calc-result-label">Total glucides du repas</div>
+            <div class="calc-result-val" id="calc-total-val">0</div>
+            <div class="calc-result-unit">grammes de glucides</div>
+          </div>
+          <button onclick="calcReset()" style="width:100%;padding:11px;background:#ffebee;border:3px solid #ffcdd2;border-radius:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#c62828;cursor:pointer;margin-top:10px">
+            🗑️ Tout effacer
+          </button>
+        </div>
+
+        <div class="calc-note">💡 Lis le tableau sur l'emballage : "Glucides" pour 100g, puis pèse ta portion.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIQUE -->
+  <div id="page-history" class="page">
+    <div style="padding:12px">
+      <div class="week-chart" id="week-chart"></div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- RÉGLAGES -->
+  <div id="page-settings" class="page">
+    <div style="padding:12px">
+      <div class="settings-section">
+        <div class="settings-title">🎯 Objectif quotidien</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Glucides / jour (g)</div>
+            <div class="setting-desc">Recommandé par votre médecin</div>
+          </div>
+          <div class="setting-ctrl"><input type="number" id="set-target" placeholder="—" min="0" max="500"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">💉 Ratio insuline</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Ratio glucides / unité</div>
+            <div class="setting-desc">Ex : 15 = 1U pour 15g de glucides</div>
+          </div>
+          <div class="setting-ctrl"><input type="number" id="set-ratio" placeholder="—" min="1" max="100"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">🗓️ Données</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Effacer aujourd'hui</div>
+            <div class="setting-desc">Remet le journal du jour à zéro</div>
+          </div>
+          <button onclick="clearToday()" style="padding:7px 13px;background:#ffebee;border:2px solid #ef9a9a;border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:#c62828;cursor:pointer">Effacer</button>
+        </div>
+      </div>
+      <button class="btn-save-settings" onclick="saveSettings()">💾 Sauvegarder</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL AJOUT -->
+<div class="modal-overlay" id="modal-add" onclick="closeModalOnBackdrop(event,'modal-add')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-food-header" id="modal-food-header"></div>
+    <div class="modal-label">Combien de grammes ? 🍽️</div>
+    <div class="qty-row">
+      <button class="qty-btn" onclick="adjustQty(-10)">−</button>
+      <input class="qty-input" type="number" id="add-qty" value="100" min="1" max="2000" oninput="updateGlucPreview()">
+      <button class="qty-btn" onclick="adjustQty(10)">＋</button>
+    </div>
+    <div class="modal-label">C'est pour quel repas ? 🕐</div>
+    <div class="meal-selector" id="meal-selector"></div>
+    <button class="btn-confirm" onclick="confirmAdd()">✓ Ajouter !</button>
+    <button class="btn-cancel" onclick="closeModal('modal-add')">Annuler</button>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────────
+const JOURNAL_KEY='glucokid_journal_v2';
+const SETTINGS_KEY='glucokid_settings_v2';
+const todayKey=()=>new Date().toISOString().slice(0,10);
+const MEALS=[
+  {key:'matin',label:'Petit-déj',icon:'🌅',theme:'theme-matin'},
+  {key:'midi',label:'Déjeuner',icon:'☀️',theme:'theme-midi'},
+  {key:'soir',label:'Dîner',icon:'🌙',theme:'theme-soir'},
+  {key:'collation',label:'Goûter',icon:'🍎',theme:'theme-collation'},
+];
+const CIQUAL=[
+  {id:'c1',name:'Pain blanc (baguette)',gluc:55,icon:'🥖',cat:'Féculents'},
+  {id:'c2',name:'Pain complet',gluc:43,icon:'🍞',cat:'Féculents'},
+  {id:'c3',name:'Pain de mie',gluc:50,icon:'🍞',cat:'Féculents'},
+  {id:'c4',name:'Riz blanc cuit',gluc:28,icon:'🍚',cat:'Féculents'},
+  {id:'c5',name:'Riz brun cuit',gluc:24,icon:'🍚',cat:'Féculents'},
+  {id:'c6',name:'Pâtes cuites',gluc:25,icon:'🍝',cat:'Féculents'},
+  {id:'c7',name:'Pomme de terre vapeur',gluc:17,icon:'🥔',cat:'Féculents'},
+  {id:'c8',name:'Frites',gluc:34,icon:'🍟',cat:'Féculents'},
+  {id:'c9',name:'Flocons d\'avoine',gluc:66,icon:'🥣',cat:'Féculents'},
+  {id:'c10',name:'Corn flakes',gluc:83,icon:'🥣',cat:'Féculents'},
+  {id:'c11',name:'Croissant',gluc:46,icon:'🥐',cat:'Féculents'},
+  {id:'c12',name:'Pain au chocolat',gluc:47,icon:'🥐',cat:'Féculents'},
+  {id:'c13',name:'Crêpe nature',gluc:40,icon:'🫓',cat:'Féculents'},
+  {id:'c14',name:'Pizza margherita',gluc:30,icon:'🍕',cat:'Féculents'},
+  {id:'c15',name:'Quinoa cuit',gluc:21,icon:'🌾',cat:'Féculents'},
+  {id:'c16',name:'Pomme',gluc:12,icon:'🍎',cat:'Fruits'},
+  {id:'c17',name:'Banane',gluc:20,icon:'🍌',cat:'Fruits'},
+  {id:'c18',name:'Orange',gluc:10,icon:'🍊',cat:'Fruits'},
+  {id:'c19',name:'Raisin',gluc:18,icon:'🍇',cat:'Fruits'},
+  {id:'c20',name:'Fraise',gluc:7,icon:'🍓',cat:'Fruits'},
+  {id:'c21',name:'Mangue',gluc:15,icon:'🥭',cat:'Fruits'},
+  {id:'c22',name:'Poire',gluc:12,icon:'🍐',cat:'Fruits'},
+  {id:'c23',name:'Pêche',gluc:10,icon:'🍑',cat:'Fruits'},
+  {id:'c24',name:'Kiwi',gluc:11,icon:'🥝',cat:'Fruits'},
+  {id:'c25',name:'Melon',gluc:8,icon:'🍈',cat:'Fruits'},
+  {id:'c26',name:'Pastèque',gluc:7,icon:'🍉',cat:'Fruits'},
+  {id:'c27',name:'Cerise',gluc:14,icon:'🍒',cat:'Fruits'},
+  {id:'c28',name:'Myrtille',gluc:12,icon:'🫐',cat:'Fruits'},
+  {id:'c29',name:'Lait demi-écrémé',gluc:5,icon:'🥛',cat:'Laitiers'},
+  {id:'c30',name:'Yaourt nature',gluc:5,icon:'🍶',cat:'Laitiers'},
+  {id:'c31',name:'Yaourt aux fruits',gluc:14,icon:'🍶',cat:'Laitiers'},
+  {id:'c32',name:'Fromage blanc',gluc:4,icon:'🥛',cat:'Laitiers'},
+  {id:'c33',name:'Lait chocolaté',gluc:11,icon:'🍫',cat:'Laitiers'},
+  {id:'c34',name:'Jus d\'orange frais',gluc:10,icon:'🥤',cat:'Boissons'},
+  {id:'c35',name:'Jus de pomme',gluc:11,icon:'🥤',cat:'Boissons'},
+  {id:'c36',name:'Soda cola',gluc:11,icon:'🥤',cat:'Boissons'},
+  {id:'c37',name:'Eau',gluc:0,icon:'💧',cat:'Boissons'},
+  {id:'c38',name:'Sucre blanc',gluc:100,icon:'🧂',cat:'Sucreries'},
+  {id:'c39',name:'Miel',gluc:80,icon:'🍯',cat:'Sucreries'},
+  {id:'c40',name:'Nutella',gluc:57,icon:'🍫',cat:'Sucreries'},
+  {id:'c41',name:'Chocolat noir',gluc:31,icon:'🍫',cat:'Sucreries'},
+  {id:'c42',name:'Chocolat au lait',gluc:56,icon:'🍫',cat:'Sucreries'},
+  {id:'c43',name:'Biscuit (petits-beurre)',gluc:70,icon:'🍪',cat:'Sucreries'},
+  {id:'c44',name:'Gâteau au chocolat',gluc:55,icon:'🎂',cat:'Sucreries'},
+  {id:'c45',name:'Glace vanille',gluc:23,icon:'🍦',cat:'Sucreries'},
+  {id:'c46',name:'Carottes',gluc:7,icon:'🥕',cat:'Légumes'},
+  {id:'c47',name:'Petits pois',gluc:11,icon:'🟢',cat:'Légumes'},
+  {id:'c48',name:'Maïs doux',gluc:18,icon:'🌽',cat:'Légumes'},
+  {id:'c49',name:'Lentilles cuites',gluc:17,icon:'🫘',cat:'Légumes'},
+  {id:'c50',name:'Pois chiches cuits',gluc:21,icon:'🫘',cat:'Légumes'},
+];
+const CATS=['Tout',...new Set(CIQUAL.map(f=>f.cat))];
+const MASCOT_MSGS={
+  empty:["Bonjour ! Qu'est-ce que tu manges ? 😊","Clique sur ＋ pour ajouter ! 🍽️"],
+  low:["Super ! Continue comme ça 💪","Bravo, tu gères bien tes repas ! 🌟"],
+  medium:["C'est bien ! Joli repas 😄","Tu te débrouilles super bien ! 🎉"],
+  high:["N'oublie pas de parler à tes parents 💙","Pense à ton traitement 🩺"],
+};
+
+// ── STATE ─────────────────────────────────────────────────────
+let state={selectedFood:null,selectedMeal:'matin',searchQuery:'',activeCategory:'Tout',scannerStream:null,zxingReader:null};
+
+// ── STORAGE ───────────────────────────────────────────────────
+function loadJournal(){try{return JSON.parse(localStorage.getItem(JOURNAL_KEY)||'{}');}catch{return {};}}
+function todayEntries(){const j=loadJournal();return j[todayKey()]||{matin:[],midi:[],soir:[],collation:[]};}
+function saveEntries(e){const j=loadJournal();j[todayKey()]=e;localStorage.setItem(JOURNAL_KEY,JSON.stringify(j));}
+function loadSettings(){try{return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');}catch{return {};}}
+function saveSettingsData(s){localStorage.setItem(SETTINGS_KEY,JSON.stringify(s));}
+
+// ── PAGES ─────────────────────────────────────────────────────
+function showPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const idx=['journal','search','calc','history','settings'].indexOf(page);
+  if(idx>=0&&idx<4) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  if(page==='journal') renderJournal();
+  if(page==='search'){renderCatChips();renderResults();}
+  if(page==='history') renderHistory();
+  if(page==='settings') loadSettingsUI();
+}
+
+// ── JOURNAL ───────────────────────────────────────────────────
+function renderJournal(){
+  const entries=todayEntries(),container=document.getElementById('meals-container');
+  container.innerHTML='';
+  let totalDay=0; const mt={};
+  MEALS.forEach(meal=>{
+    const items=entries[meal.key]||[],mg=items.reduce((s,e)=>s+e.glucTotal,0);
+    mt[meal.key]=mg; totalDay+=mg;
+    const card=document.createElement('div');
+    card.className=`meal-card ${meal.theme}`;
+    card.innerHTML=`
+      <div class="meal-card-header">
+        <div class="meal-card-title">${meal.icon} ${meal.label}</div>
+        ${mg>0?`<div class="meal-badge">${Math.round(mg)} g</div>`:''}
+      </div>
+      <div class="meal-card-body">
+        ${items.length===0?'<div class="empty-chip">Rien encore !</div>':
+          items.map((e,i)=>`
+            <div class="food-chip">
+              <div class="food-chip-icon">${e.icon}</div>
+              <div class="food-chip-info">
+                <div class="food-chip-name">${e.name}</div>
+                <div class="food-chip-detail">${e.qty} g · ${e.gluc100} g/100g</div>
+                ${e.time?`<div class="food-chip-time">🕐 ${e.time}</div>`:''}
+              </div>
+              <div class="food-chip-gluc">${Math.round(e.glucTotal)} <small>g</small></div>
+              <button class="btn-del-chip" onclick="deleteEntry('${meal.key}',${i})">✕</button>
+            </div>`).join('')}
+        <button class="btn-add-to-meal" onclick="openAddForMeal('${meal.key}')">＋ Ajouter</button>
+      </div>`;
+    container.appendChild(card);
+  });
+  document.getElementById('total-gluc').innerHTML=`${Math.round(totalDay)} <span>g</span>`;
+  ['matin','midi','soir','collation'].forEach(k=>document.getElementById('stat-'+k).textContent=Math.round(mt[k]||0)+'g');
+  // target display
+  const s=loadSettings(), target=s.target||0;
+  document.getElementById('gluc-target-display').textContent=target?`Objectif : ${target} g / jour`:'';
+  // mascot
+  let msgs;
+  if(totalDay===0) msgs=MASCOT_MSGS.empty;
+  else if(!target||totalDay<target*0.6) msgs=MASCOT_MSGS.low;
+  else if(totalDay<target*0.95) msgs=MASCOT_MSGS.medium;
+  else msgs=MASCOT_MSGS.high;
+  document.getElementById('mascot-msg').textContent=msgs[Math.floor(Math.random()*msgs.length)];
+}
+function deleteEntry(meal,i){const e=todayEntries();e[meal].splice(i,1);saveEntries(e);renderJournal();}
+function openAddForMeal(k){state.selectedMeal=k;showPage('search');}
+
+// ── SEARCH ────────────────────────────────────────────────────
+function renderCatChips(){
+  document.getElementById('cat-chips').innerHTML=CATS.map(c=>`<div class="cat-pill ${state.activeCategory===c?'active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
+}
+function setCategory(cat){state.activeCategory=cat;renderCatChips();renderResults();}
+function onSearch(){state.searchQuery=document.getElementById('search-input').value;renderResults();}
+function renderResults(){
+  const q=state.searchQuery.toLowerCase().trim(),cat=state.activeCategory;
+  let foods=[...CIQUAL];
+  if(cat!=='Tout') foods=foods.filter(f=>f.cat===cat);
+  if(q) foods=foods.filter(f=>f.name.toLowerCase().includes(q));
+  foods.sort((a,b)=>a.name.localeCompare(b.name));
+  window._ciqRes=foods;
+  const container=document.getElementById('search-results');
+  if(!foods.length){container.innerHTML=`<div class="empty-state"><span class="e-icon">🔍</span><p>Pas trouvé !<br>Cherche dans Open Food Facts ↓</p></div>`;return;}
+  container.innerHTML=foods.map((f,i)=>`
+    <div class="food-card" onclick="openAddModal(${i},'ciqual')">
+      <div class="food-card-icon">${f.icon}</div>
+      <div class="food-card-info"><div class="food-card-name">${f.name}</div><div class="food-card-cat">${f.cat}</div></div>
+      <div class="food-card-gluc">${f.gluc}<small>g/100g</small></div>
+    </div>`).join('');
+}
+
+// ── OPEN FOOD FACTS JSONP ─────────────────────────────────────
+function jsonpFetch(url,cbParam='jsonp'){
+  return new Promise((resolve,reject)=>{
+    const cbName='_off_'+Date.now();
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();reject(new Error('Délai dépassé'));},10000);
+    function cleanup(){clearTimeout(timer);script.remove();delete window[cbName];}
+    window[cbName]=(data)=>{cleanup();resolve(data);};
+    script.src=url+(url.includes('?')?'&':'?')+cbParam+'='+cbName;
+    script.onerror=()=>{cleanup();reject(new Error('Erreur réseau'));};
+    document.head.appendChild(script);
+  });
+}
+async function searchOFF(){
+  const q=document.getElementById('off-search-input').value.trim();
+  if(!q) return;
+  setOFFStatus('<span class="spinner"></span> Recherche…');
+  document.getElementById('off-results').innerHTML='';
+  try{
+    const d=await jsonpFetch(`https://world.openfoodfacts.org/cgi/search.pl?action=process&search_terms=${encodeURIComponent(q)}&search_simple=1&json=1&page_size=10&fields=product_name,nutriments,categories_tags&lc=fr&cc=fr`,'jsonp');
+    const valid=(d.products||[]).filter(p=>p.product_name&&p.nutriments?.carbohydrates_100g!=null);
+    if(!valid.length){setOFFStatus('❌ Rien trouvé !');return;}
+    setOFFStatus(`✅ ${valid.length} produit${valid.length>1?'s':''} !`);
+    window._offRes=valid;
+    document.getElementById('off-results').innerHTML=valid.map((p,i)=>{
+      const gluc=Math.round(p.nutriments.carbohydrates_100g*10)/10;
+      return `<div class="food-card" onclick="openAddModal(${i},'off')">
+        <div class="food-card-icon">📦</div>
+        <div class="food-card-info"><div class="food-card-name">${(p.product_name||'Produit').substring(0,45)}</div><div class="food-card-cat">Open Food Facts</div></div>
+        <div class="food-card-gluc">${gluc}<small>g/100g</small></div>
+        <div class="food-card-tag tag-off">OFF</div>
+      </div>`;
+    }).join('');
+  }catch(e){setOFFStatus('❌ '+e.message);}
+}
+async function fetchOFFByCode(code){
+  setOFFStatus('<span class="spinner"></span> Produit scanné : '+code+'…');
+  document.getElementById('off-results').innerHTML='';
+  try{
+    const d=await jsonpFetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`,'callback');
+    if(d.status!==1||!d.product||d.product.nutriments?.carbohydrates_100g==null){setOFFStatus('❌ Produit introuvable ou données manquantes.');return;}
+    const p=d.product;
+    setOFFStatus('✅ Produit trouvé !');
+    window._offRes=[p];
+    const gluc=Math.round(p.nutriments.carbohydrates_100g*10)/10;
+    document.getElementById('off-results').innerHTML=`<div class="food-card" onclick="openAddModal(0,'off')">
+      <div class="food-card-icon">📦</div>
+      <div class="food-card-info"><div class="food-card-name">${(p.product_name||'Produit').substring(0,45)}</div><div class="food-card-cat">Scanné !</div></div>
+      <div class="food-card-gluc">${gluc}<small>g/100g</small></div>
+      <div class="food-card-tag tag-off">OFF</div>
+    </div>`;
+  }catch(e){setOFFStatus('❌ '+e.message);}
+}
+function setOFFStatus(html){document.getElementById('off-status').innerHTML=html;}
+
+// ── SCANNER iOS/Android (ZXing) ───────────────────────────────
+async function toggleScanner(){
+  if(state.scannerStream){stopScanner();return;}
+  const container=document.getElementById('scanner-container');
+  container.style.display='block';
+  try{
+    state.scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+    const video=document.getElementById('scanner-video');
+    video.srcObject=state.scannerStream;
+    await video.play();
+    // Try ZXing first (works on iOS Safari), fallback to BarcodeDetector
+    if(typeof ZXing !== 'undefined'){
+      try{
+        const hints=new Map();
+        const formats=[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.CODE_128];
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,formats);
+        const reader=new ZXing.BrowserMultiFormatReader(hints);
+        state.zxingReader=reader;
+        reader.decodeFromVideoElement(video,(result,err)=>{
+          if(result){
+            const code=result.getText();
+            stopScanner();
+            fetchOFFByCode(code);
+          }
+        });
+        return;
+      }catch(e){}
+    }
+    // Fallback BarcodeDetector (Chrome Android)
+    if('BarcodeDetector' in window){
+      const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
+      state.barcodeInterval=setInterval(async()=>{
+        if(!state.scannerStream)return;
+        try{const codes=await detector.detect(video);if(codes.length){stopScanner();fetchOFFByCode(codes[0].rawValue);}}
+        catch(e){}
+      },500);
+    } else {
+      setOFFStatus('⚠️ Scanner non supporté sur cet appareil. Saisissez le code manuellement ci-dessous.');
+      // Show manual input
+      document.getElementById('off-results').innerHTML=`<div style="display:flex;gap:8px;margin-top:8px">
+        <input id="manual-barcode" class="off-input" type="text" inputmode="numeric" placeholder="Code-barres (ex: 3017624010701)">
+        <button class="btn-off" onclick="fetchOFFByCode(document.getElementById('manual-barcode').value.trim())">OK</button>
+      </div>`;
+    }
+  }catch(e){
+    container.style.display='none';
+    setOFFStatus('❌ Caméra refusée. Sur iPhone : Réglages → Safari → Caméra → Autoriser. Ou saisissez le code ci-dessous.');
+    document.getElementById('off-results').innerHTML=`<div style="display:flex;gap:8px;margin-top:8px">
+      <input id="manual-barcode" class="off-input" type="text" inputmode="numeric" placeholder="Code-barres (ex: 3017624010701)">
+      <button class="btn-off" onclick="fetchOFFByCode(document.getElementById('manual-barcode').value.trim())">OK</button>
+    </div>`;
+  }
+}
+function stopScanner(){
+  if(state.zxingReader){try{state.zxingReader.reset();}catch(e){}state.zxingReader=null;}
+  if(state.scannerStream){state.scannerStream.getTracks().forEach(t=>t.stop());state.scannerStream=null;}
+  if(state.barcodeInterval){clearInterval(state.barcodeInterval);state.barcodeInterval=null;}
+  document.getElementById('scanner-container').style.display='none';
+}
+
+// ── MODAL AJOUT ───────────────────────────────────────────────
+function openAddModal(index,source){
+  let food;
+  if(source==='off'){
+    const p=window._offRes?.[index]; if(!p)return;
+    food={name:(p.product_name||'Produit').substring(0,50),gluc:Math.round(p.nutriments.carbohydrates_100g*10)/10,icon:'📦'};
+  } else {
+    food=window._ciqRes?.[index]; if(!food)return;
+  }
+  state.selectedFood=food;
+  document.getElementById('modal-food-header').innerHTML=`
+    <div class="modal-food-icon">${food.icon}</div>
+    <div class="modal-food-info">
+      <div class="modal-food-name">${food.name}</div>
+      <div class="modal-food-g100">${food.gluc} g de glucides / 100 g</div>
+    </div>
+    <div class="modal-gluc-res" id="gluc-preview">${food.gluc}<small>g</small></div>`;
+  document.getElementById('add-qty').value=100;
+  document.getElementById('meal-selector').innerHTML=MEALS.map(m=>`
+    <button class="meal-sel-btn ${state.selectedMeal===m.key?'selected':''}" onclick="selectMeal('${m.key}')">
+      <span class="ms-icon">${m.icon}</span>${m.label}
+    </button>`).join('');
+  document.getElementById('modal-add').classList.add('visible');
+}
+function selectMeal(k){
+  state.selectedMeal=k;
+  document.querySelectorAll('.meal-sel-btn').forEach((b,i)=>b.classList.toggle('selected',MEALS[i].key===k));
+}
+function updateGlucPreview(){
+  if(!state.selectedFood)return;
+  const qty=parseFloat(document.getElementById('add-qty').value)||0;
+  document.getElementById('gluc-preview').innerHTML=`${Math.round(state.selectedFood.gluc*qty/100*10)/10}<small>g</small>`;
+}
+function adjustQty(d){
+  const i=document.getElementById('add-qty');
+  i.value=Math.max(1,Math.min(2000,(parseFloat(i.value)||100)+d));
+  updateGlucPreview();
+}
+function confirmAdd(){
+  if(!state.selectedFood)return;
+  const qty=parseFloat(document.getElementById('add-qty').value)||0;
+  const now=new Date();
+  const time=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const entry={name:state.selectedFood.name,icon:state.selectedFood.icon,qty,gluc100:state.selectedFood.gluc,glucTotal:Math.round(state.selectedFood.gluc*qty/100*10)/10,time};
+  const entries=todayEntries(); entries[state.selectedMeal].push(entry); saveEntries(entries);
+  closeModal('modal-add');
+  launchConfetti();
+  showPage('journal');
+}
+
+
+
+// ── CALCULATRICE ──────────────────────────────────────────────
+let calcItems=[];
+function calcGlucPreview(){
+  const g100=parseFloat(document.getElementById('calc-gluc100').value)||0;
+  const qty=parseFloat(document.getElementById('calc-qty').value)||0;
+  const btn=document.getElementById('btn-calc-add');
+  const preview=document.getElementById('calc-preview-box');
+  if(g100>0&&qty>0){
+    const res=Math.round(g100*qty/100*10)/10;
+    document.getElementById('calc-preview-val').textContent=res;
+    preview.style.display='flex';
+    btn.disabled=false; btn.style.opacity='1';
+  } else {
+    preview.style.display='none';
+    btn.disabled=true; btn.style.opacity='.4';
+  }
+}
+function calcAddItem(){
+  const g100=parseFloat(document.getElementById('calc-gluc100').value)||0;
+  const qty=parseFloat(document.getElementById('calc-qty').value)||0;
+  if(!g100||!qty) return;
+  const name=document.getElementById('calc-name').value.trim();
+  const gluc=Math.round(g100*qty/100*10)/10;
+  calcItems.push({name,g100,qty,gluc});
+  document.getElementById('calc-name').value='';
+  document.getElementById('calc-gluc100').value='';
+  document.getElementById('calc-qty').value='';
+  document.getElementById('calc-preview-box').style.display='none';
+  document.getElementById('btn-calc-add').disabled=true;
+  document.getElementById('btn-calc-add').style.opacity='.4';
+  renderCalcItems();
+}
+function calcDeleteItem(i){calcItems.splice(i,1);renderCalcItems();}
+function calcReset(){calcItems=[];renderCalcItems();}
+function renderCalcItems(){
+  const list=document.getElementById('calc-items-list');
+  const totalBox=document.getElementById('calc-total-box');
+  if(!calcItems.length){list.innerHTML='';totalBox.style.display='none';return;}
+  const total=Math.round(calcItems.reduce((s,e)=>s+e.gluc,0)*10)/10;
+  list.innerHTML=calcItems.map((e,i)=>`
+    <div style="display:flex;align-items:center;gap:9px;background:var(--bg);border-radius:13px;padding:10px 13px;margin-bottom:7px">
+      <div style="font-size:22px">${e.name?'🍽️':'📦'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name||'Aliment '+(i+1)}</div>
+        <div style="font-size:11px;color:var(--text-m);font-weight:600">${e.qty} g · ${e.g100} g/100g</div>
+      </div>
+      <div style="font-family:'Baloo 2',cursive;font-size:22px;color:var(--sky-d);flex-shrink:0">${e.gluc}<small style="font-family:'Nunito',sans-serif;font-size:10px;color:var(--text-l);font-weight:700"> g</small></div>
+      <button onclick="calcDeleteItem(${i})" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-l);padding:2px 6px;border-radius:8px;flex-shrink:0" title="Supprimer">✕</button>
+    </div>`).join('');
+  document.getElementById('calc-total-val').textContent=total;
+  totalBox.style.display='block';
+}
+
+// ── HISTORIQUE ────────────────────────────────────────────────
+function renderHistory(){
+  const journal=loadJournal();
+  // Build last 7 days
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    const entries=journal[key]||{matin:[],midi:[],soir:[],collation:[]};
+    const allItems=[...entries.matin,...entries.midi,...entries.soir,...entries.collation];
+    const total=allItems.reduce((s,e)=>s+e.glucTotal,0);
+    days.push({key,date:d,entries,allItems,total});
+  }
+  // Week chart
+  const maxTotal=Math.max(...days.map(d=>d.total),1);
+  const todayK=todayKey();
+  document.getElementById('week-chart').innerHTML=`
+    <div class="week-chart-title">📊 Glucides cette semaine</div>
+    <div class="chart-bars">
+      ${days.map(d=>{
+        const h=Math.max(Math.round(d.total/maxTotal*76),d.total>0?6:2);
+        const isToday=d.key===todayK;
+        const dayLabel=d.date.toLocaleDateString('fr-FR',{weekday:'short'});
+        return `<div class="chart-bar-wrap">
+          <div class="chart-bar-val">${d.total>0?Math.round(d.total)+'g':''}</div>
+          <div class="chart-bar ${isToday?'today':''}" style="height:${h}px"></div>
+          <div class="chart-bar-day" style="${isToday?'color:var(--orange-d)':''}">${dayLabel}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // Day list (most recent first)
+  const list=document.getElementById('history-list');
+  const reversedDays=[...days].reverse();
+  if(!reversedDays.some(d=>d.allItems.length)){
+    list.innerHTML=`<div class="empty-state"><span class="e-icon">📅</span><p>Aucun repas enregistré<br>cette semaine !</p></div>`;
+    return;
+  }
+  list.innerHTML=reversedDays.filter(d=>d.allItems.length>0).map(d=>{
+    const label=d.key===todayK?`Aujourd'hui — ${Math.round(d.total)} g`:
+      `${d.date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})} — ${Math.round(d.total)} g`;
+    const items=d.allItems.map((e,i)=>`
+      <div class="history-entry">
+        <div class="history-entry-icon">${e.icon}</div>
+        <div class="history-entry-info">
+          <div class="history-entry-name">${e.name}</div>
+          <div class="history-entry-detail">${e.qty}g${e.time?' · 🕐 '+e.time:''}</div>
+        </div>
+        <div class="history-entry-gluc">${Math.round(e.glucTotal)}<small style="font-size:10px;color:var(--text-l);font-family:'Nunito',sans-serif;font-weight:700"> g</small></div>
+      </div>`).join('');
+    return `<div class="history-day">
+      <div class="history-day-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <div class="history-day-date">📅 ${label}</div>
+        <div style="font-size:12px;color:var(--text-l);font-weight:700">▼</div>
+      </div>
+      <div class="history-day-body" style="display:${d.key===todayK?'block':'none'}">${items}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── RÉGLAGES ──────────────────────────────────────────────────
+function loadSettingsUI(){
+  const s=loadSettings();
+  document.getElementById('set-target').value=s.target||'';
+  document.getElementById('set-ratio').value=s.ratio||'';
+}
+function saveSettings(){
+  const s=loadSettings();
+  const target=parseInt(document.getElementById('set-target').value)||0;
+  const ratio=parseFloat(document.getElementById('set-ratio').value)||0;
+  if(target) s.target=target; else delete s.target;
+  if(ratio) s.ratio=ratio; else delete s.ratio;
+  saveSettingsData(s);
+  // Pre-fill ratio in calc
+  if(ratio) document.getElementById('dose-ratio').value=ratio;
+  alert('✅ Réglages sauvegardés !');
+  showPage('journal');
+}
+function clearToday(){
+  if(!confirm('Effacer tout le journal d\'aujourd\'hui ?'))return;
+  const j=loadJournal(); delete j[todayKey()]; localStorage.setItem(JOURNAL_KEY,JSON.stringify(j));
+  renderJournal();
+  showPage('journal');
+}
+
+// ── CONFETTI ──────────────────────────────────────────────────
+function launchConfetti(){
+  const colors=['#4fc3f7','#ffca28','#66bb6a','#f48fb1','#ce93d8','#ffb74d'];
+  for(let i=0;i<16;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${25+Math.random()*50}vw;top:45vh;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*.3}s;animation-duration:${.7+Math.random()*.7}s;transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),1400);
+  }
+}
+
+// ── MODALS ────────────────────────────────────────────────────
+function closeModal(id){document.getElementById(id).classList.remove('visible');}
+function closeModalOnBackdrop(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('header-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+  const s=loadSettings();
+  renderJournal(); renderCatChips(); renderResults();
+  initPWA();
+});
+
+// ── PWA ───────────────────────────────────────────────────────
+function initPWA(){
+  // Generate icon via canvas
+  const canvas=document.createElement('canvas');
+  canvas.width=512; canvas.height=512;
+  const ctx=canvas.getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,512,512);
+  grad.addColorStop(0,'#0288d1'); grad.addColorStop(1,'#7b1fa2');
+  ctx.fillStyle=grad;
+  if(ctx.roundRect) ctx.roundRect(0,0,512,512,100); else ctx.rect(0,0,512,512);
+  ctx.fill();
+  ctx.font='280px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🦊',256,230);
+  ctx.font='bold 68px sans-serif'; ctx.fillStyle='#fff';
+  ctx.fillText('GlucoKid',256,420);
+  const iconUrl=canvas.toDataURL('image/png');
+  document.getElementById('apple-icon').href=iconUrl;
+
+  // Manifest blob
+  const manifest={
+    name:'GlucoKid',short_name:'GlucoKid',
+    description:'Suivi glucides pour enfants diabétiques',
+    start_url:'.',display:'standalone',orientation:'portrait',
+    background_color:'#e8f4fd',theme_color:'#0288d1',lang:'fr',
+    icons:[{src:iconUrl,sizes:'512x512',type:'image/png',purpose:'any maskable'}]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  document.getElementById('pwa-manifest').href=URL.createObjectURL(blob);
+
+  // Android install prompt
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstallBanner(false);});
+
+  // iOS hint
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(isIOS&&!isStandalone) setTimeout(()=>showInstallBanner(true),2500);
+
+  function showInstallBanner(ios){
+    if(document.getElementById('install-banner'))return;
+    const banner=document.createElement('div');
+    banner.id='install-banner';
+    banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#0288d1,#7b1fa2);color:#fff;padding:14px 16px;z-index:999;box-shadow:0 -4px 20px rgba(0,0,0,.25);font-family:Nunito,sans-serif;border-radius:20px 20px 0 0';
+    if(ios){
+      banner.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-weight:800;font-size:15px">📲 Installer GlucoKid sur iPhone</div>
+          <button onclick="document.getElementById('install-banner').remove()" style="background:rgba(255,255,255,.25);border:none;border-radius:8px;color:#fff;padding:5px 11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;font-size:13px">✕</button>
+        </div>
+        <div style="font-size:13px;line-height:2;opacity:.92">
+          1. Appuie sur <strong>⬆️ Partager</strong> en bas de Safari<br>
+          2. Choisis <strong>"Sur l'écran d'accueil"</strong><br>
+          3. Appuie sur <strong>Ajouter</strong> — c'est fait ! 🎉
+        </div>`;
+      setTimeout(()=>document.getElementById('install-banner')?.remove(),14000);
+    } else {
+      banner.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:28px">🦊</span>
+            <div>
+              <div style="font-weight:800;font-size:14px">Installer GlucoKid</div>
+              <div style="font-size:12px;opacity:.8">Accès rapide sur l'écran d'accueil</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="document.getElementById('install-banner').remove()" style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:10px;color:#fff;padding:8px 12px;font-family:Nunito,sans-serif;font-size:12px;font-weight:800;cursor:pointer">Plus tard</button>
+            <button id="btn-install" style="background:#fff;border:none;border-radius:10px;color:#0288d1;padding:8px 14px;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer">Installer !</button>
+          </div>
+        </div>`;
+      document.getElementById('btn-install').onclick=async()=>{
+        if(deferredPrompt){await deferredPrompt.prompt();deferredPrompt=null;}
+        banner.remove();
+      };
+    }
+    document.body.appendChild(banner);
+  }
+}
+</script>
+</body>
+</html>
