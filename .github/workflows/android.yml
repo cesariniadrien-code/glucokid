@@ -1,9 +1,8 @@
-name: Build Android APK
+name: Build APK
 
 on:
 push:
-branches:
-- main
+branches: [ main ]
 
 jobs:
 build:
@@ -11,12 +10,13 @@ runs-on: ubuntu-latest
 
 ```
 steps:
-  - uses: actions/checkout@v3
+  - name: Checkout repository
+    uses: actions/checkout@v3
 
-  - name: Build APK
+  - name: Create APK
     run: |
       mkdir build
-      echo "APK generated" > build/glucokid.apk
+      echo "GlucoKid APK" > build/glucokid.apk
 
   - name: Upload APK
     uses: actions/upload-artifact@v3
