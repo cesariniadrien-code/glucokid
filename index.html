@@ -3301,16 +3301,18 @@ async function searchOFFByName(){
     if(data.error) throw new Error(data.error);
     // Format brut OFF : data.products[]
     const all=data.products||[];
-    const products=all.filter(p=>{
+    // OFF utilise plusieurs noms de champs selon les produits
+    const getCarbs=p=>{
       const n=p.nutriments||{};
-      return n.carbohydrates_100g!=null;
-    });
+      return n.carbohydrates_100g??n['carbohydrates_value']??n.carbohydrates??null;
+    };
+    const products=all.filter(p=>getCarbs(p)!=null&&(p.product_name_fr||p.product_name));
     if(!products.length) throw new Error('Aucun résultat avec données glucides pour "'+q+'"<br><small>'+all.length+' produits trouvés mais sans info glucides</small>');
     setOFFStatus('✅ '+products.length+' résultat'+(products.length>1?'s':''));
     document.getElementById('off-result').innerHTML=products.slice(0,10).map(p=>{
       const name=((p.product_name_fr||p.product_name)||'Produit inconnu').trim();
       const brand=(p.brands||'').split(',')[0].trim();
-      const gluc=Math.round(parseFloat(p.nutriments.carbohydrates_100g)*10)/10;
+      const gluc=Math.round(parseFloat(getCarbs(p))*10)/10;
       const displayName=name+(brand?` <span style="color:var(--text-l);font-size:11px;font-weight:600">${brand}</span>`:'');
       const safeName=(name+(brand?' - '+brand:'')).replace(/'/g,"\\'").replace(/"/g,'&quot;');
       return `<div class="food-card" style="border-color:var(--sky);margin-bottom:6px">
