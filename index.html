@@ -3297,25 +3297,19 @@ async function searchOFFByName(){
   try{
     const resp=await fetch(OFF_WORKER+'?search='+encodeURIComponent(q));
     if(!resp.ok) throw new Error('Erreur réseau ('+resp.status+')');
-    const text=await resp.text();
-    let data;
-    try{ data=JSON.parse(text); }
-    catch(e){ throw new Error('Réponse invalide du serveur — réessaie dans quelques secondes'); }
+    const data=await resp.json();
     if(data.error) throw new Error(data.error);
-    // API v2 : products dans data.products
-    const products=(data.products||[]).filter(p=>{
-      const n=p.nutriments||{};
-      return (n['carbohydrates_100g']!=null)||(n['carbohydrates']!=null);
-    });
-    if(!products.length) throw new Error('Aucun résultat avec données glucides pour "'+q+'"');
-    setOFFStatus('✅ '+products.length+' résultat'+(products.length>1?'s':'')+' trouvé'+(products.length>1?'s':''));
-    document.getElementById('off-result').innerHTML=products.map(p=>{
-      const name=(p.product_name_fr||p.product_name||'').trim()||'Produit inconnu';
-      const brand=p.brands?(p.brands.split(',')[0].trim()):'';
-      const nutriments=p.nutriments||{};
-      const gluc=Math.round((parseFloat(nutriments['carbohydrates_100g']??nutriments['carbohydrates'])||0)*10)/10;
-      const safeName=(name+(brand?' - '+brand:'')).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    // Worker v3 renvoie un tableau [{name, brand, carbs, code}]
+    const products=Array.isArray(data)?data:[];
+    const filtered=products.filter(p=>p.carbs!=null&&p.name);
+    if(!filtered.length) throw new Error('Aucun résultat avec données glucides pour "'+q+'"');
+    setOFFStatus('✅ '+filtered.length+' résultat'+(filtered.length>1?'s':'')+' trouvé'+(filtered.length>1?'s':''));
+    document.getElementById('off-result').innerHTML=filtered.map(p=>{
+      const name=(p.name||'Produit inconnu').trim();
+      const brand=(p.brand||'').split(',')[0].trim();
+      const gluc=Math.round(parseFloat(p.carbs)*10)/10;
       const displayName=name+(brand?` <span style="color:var(--text-l);font-size:11px;font-weight:600">${brand}</span>`:'');
+      const safeName=(name+(brand?' - '+brand:'')).replace(/'/g,"\\'").replace(/"/g,'&quot;');
       return `<div class="food-card" style="border-color:var(--sky);margin-bottom:6px">
         <div class="food-card-icon">📦</div>
         <div class="food-card-info">
@@ -3346,31 +3340,29 @@ async function searchBarcode(code){
   try{
     const resp=await fetch(OFF_WORKER+'?code='+code);
     if(!resp.ok) throw new Error('Erreur réseau');
-    const data=await resp.json();
-    if(data.status===0||!data.product) throw new Error('Produit introuvable dans Open Food Facts');
-    const p=data.product;
-    const name=p.product_name_fr||p.product_name||'Produit inconnu';
-    const nutriments=p.nutriments||{};
-    const gluc=nutriments['carbohydrates_100g']??nutriments['carbohydrates']??null;
-    if(gluc===null) throw new Error('Glucides non renseignés pour ce produit');
-    const gluc100=Math.round(parseFloat(gluc)*10)/10;
+    const p=await resp.json();
+    if(p.error) throw new Error(p.error);
+    if(!p.name||p.carbs==null) throw new Error('Produit introuvable ou glucides non renseignés');
+    const name=(p.name||'Produit inconnu').trim();
+    const brand=(p.brand||'').split(',')[0].trim();
+    const gluc=Math.round(parseFloat(p.carbs)*10)/10;
+    const safeName=(name+(brand?' - '+brand:'')).replace(/'/g,"\\'").replace(/"/g,'&quot;');
     setOFFStatus('✅ Produit trouvé !');
-    const safeName=name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     document.getElementById('off-result').innerHTML=`
       <div class="food-card" style="border-color:var(--sky);margin-top:4px">
         <div class="food-card-icon">📦</div>
         <div class="food-card-info">
-          <div class="food-card-name">${name}</div>
+          <div class="food-card-name">${name}${brand?` <span style="color:var(--text-l);font-size:11px">${brand}</span>`:''}</div>
           <div class="food-card-cat">Open Food Facts</div>
         </div>
-        <div class="food-card-gluc">${gluc100}<small>g/100g</small></div>
-        <button onclick="sendToCalc('${safeName}',${gluc100})" title="Calculatrice"
+        <div class="food-card-gluc">${gluc}<small>g/100g</small></div>
+        <button onclick="sendToCalc('${safeName}',${gluc})"
           style="background:var(--orange);border:none;color:white;font-size:16px;cursor:pointer;padding:6px 8px;border-radius:10px;flex-shrink:0;font-weight:800">🧮</button>
       </div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="addOFFToJournal('${safeName}',${gluc100})"
+        <button onclick="addOFFToJournal('${safeName}',${gluc})"
           style="flex:1;padding:9px;background:var(--sky);border:none;color:white;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border-radius:11px;cursor:pointer">➕ Ajouter au repas</button>
-        <button onclick="saveOFFToPerso('${safeName}',${gluc100})"
+        <button onclick="saveOFFToPerso('${safeName}',${gluc})"
           style="flex:1;padding:9px;background:var(--bg-card);border:2px solid var(--border);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border-radius:11px;cursor:pointer;color:var(--text-m)">⭐ Sauvegarder</button>
       </div>`;
     stopBarcodeScanner();
