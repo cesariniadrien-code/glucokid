@@ -261,6 +261,7 @@ nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:stic
   <button class="nav-btn active" onclick="showPage('journal')"><span class="ni">📋</span>Repas</button>
   <button class="nav-btn" onclick="showPage('search')"><span class="ni">🔍</span>Chercher</button>
   <button class="nav-btn" onclick="showPage('calc')"><span class="ni">🧮</span>Calcul</button>
+  <button class="nav-btn" onclick="showPage('recipes')"><span class="ni">👨‍🍳</span>Recettes</button>
   <button class="nav-btn" onclick="showPage('history')"><span class="ni">📅</span>Historique</button>
 </nav>
 
@@ -383,6 +384,94 @@ nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:stic
     </div>
   </div>
 
+  <!-- RECETTES -->
+  <div id="page-recipes" class="page">
+    <div style="padding:12px">
+
+      <!-- MES RECETTES SAUVEGARDÉES -->
+      <div id="recipe-list-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:18px;font-weight:900;color:var(--sky-d)">👨‍🍳 Mes recettes</div>
+          <button onclick="showRecipeEditor()" style="background:var(--orange);border:none;color:white;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:8px 14px;border-radius:12px;cursor:pointer">＋ Nouvelle</button>
+        </div>
+        <div id="saved-recipes"></div>
+        <div id="no-recipes" style="display:none;text-align:center;padding:30px 0;color:var(--text-l);font-weight:700;font-size:14px">
+          Pas encore de recettes 🍪<br>Crée ta première recette !
+        </div>
+      </div>
+
+      <!-- ÉDITEUR DE RECETTE -->
+      <div id="recipe-editor" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <button onclick="hideRecipeEditor()" style="background:var(--bg-card);border:2px solid var(--border);border-radius:10px;padding:6px 10px;font-size:16px;cursor:pointer">←</button>
+          <div style="font-size:17px;font-weight:900;color:var(--sky-d)" id="recipe-editor-title">Nouvelle recette</div>
+        </div>
+
+        <!-- Nom de la recette -->
+        <div class="calc-card" style="margin-bottom:12px">
+          <input class="calc-input" type="text" id="recipe-name" placeholder="Nom de la recette (ex: Cookies maison)" style="font-size:17px;font-weight:800;width:100%">
+        </div>
+
+        <!-- Ingrédients -->
+        <div class="calc-card" style="margin-bottom:12px">
+          <div class="calc-title">🥣 Ingrédients</div>
+          <div id="recipe-ingredients"></div>
+
+          <!-- Ajout ingrédient -->
+          <div style="background:var(--bg);border-radius:13px;padding:10px;border:2px dashed var(--border);margin-top:10px">
+            <div style="font-size:11px;font-weight:800;color:var(--text-m);text-transform:uppercase;margin-bottom:8px">Ajouter un ingrédient</div>
+
+            <!-- Recherche Ciqual rapide -->
+            <div style="position:relative;margin-bottom:8px">
+              <input class="off-input" type="text" id="recipe-search" placeholder="🔍 Chercher dans Ciqual…" oninput="searchRecipeIngredient()" autocomplete="off" style="width:100%">
+              <div id="recipe-search-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:2px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:100;max-height:200px;overflow-y:auto"></div>
+            </div>
+
+            <input class="off-input" type="text" id="ingr-name" placeholder="Nom (ex: Farine T55)" style="margin-bottom:8px;width:100%">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <input class="off-input" type="number" id="ingr-gluc100" placeholder="Glucides/100g" min="0" inputmode="decimal">
+              <input class="off-input" type="number" id="ingr-qty" placeholder="Quantité (g)" min="0" inputmode="decimal">
+            </div>
+            <button onclick="addRecipeIngredient()" style="width:100%;padding:10px;background:var(--sky);border:none;color:white;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border-radius:12px;cursor:pointer">＋ Ajouter cet ingrédient</button>
+          </div>
+        </div>
+
+        <!-- Calcul final -->
+        <div class="calc-card" style="margin-bottom:12px">
+          <div class="calc-title">⚖️ Poids total cuit</div>
+          <div style="font-size:12px;color:var(--text-m);font-weight:600;margin-bottom:10px">Pèse tout une fois cuit (cookies, gâteau…)</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input class="calc-input" type="number" id="recipe-total-weight" placeholder="ex: 900" min="1" inputmode="decimal" oninput="calcRecipeResult()" style="flex:1">
+            <span style="font-weight:800;color:var(--text-m);font-size:15px">g</span>
+          </div>
+        </div>
+
+        <!-- Résultat -->
+        <div class="calc-card" id="recipe-result-card" style="margin-bottom:12px;display:none;background:linear-gradient(135deg,#e0f7fa,#f3e5f5)">
+          <div class="calc-title">✨ Résultat</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:13px;font-weight:700;color:var(--text-m)">Glucides totaux recette</div>
+            <div style="font-size:22px;font-weight:900;color:var(--sky-d)" id="recipe-total-gluc">—</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text-m)">Glucides / 100g</div>
+            <div style="font-size:28px;font-weight:900;color:var(--orange)" id="recipe-per100">—</div>
+          </div>
+          <button onclick="saveRecipeAsFood()" style="width:100%;padding:11px;background:var(--orange);border:none;color:white;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border-radius:13px;cursor:pointer">
+            ⭐ Sauvegarder dans Mes aliments
+          </button>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:10px">
+          <button onclick="saveRecipe()" style="flex:1;padding:13px;background:var(--green);border:none;color:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;border-radius:14px;cursor:pointer">💾 Sauvegarder la recette</button>
+          <button onclick="hideRecipeEditor()" style="padding:13px 16px;background:var(--bg-card);border:2px solid var(--border);border-radius:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;color:var(--text-m)">Annuler</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- HISTORIQUE -->
   <div id="page-history" class="page">
     <div style="padding:12px">
@@ -402,16 +491,6 @@ nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:stic
             <div class="setting-desc">Recommandé par votre médecin</div>
           </div>
           <div class="setting-ctrl"><input type="number" id="set-target" placeholder="—" min="0" max="500"></div>
-        </div>
-      </div>
-      <div class="settings-section">
-        <div class="settings-title">💉 Ratio insuline</div>
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Ratio glucides / unité</div>
-            <div class="setting-desc">Ex : 15 = 1U pour 15g de glucides</div>
-          </div>
-          <div class="setting-ctrl"><input type="number" id="set-ratio" placeholder="—" min="1" max="100"></div>
         </div>
       </div>
       <div class="settings-section">
@@ -1594,7 +1673,7 @@ const CIQUAL=[
   {id:'q1132',name:'Pain au levain',gluc:53.1,icon:'🥖',cat:'Féculents'},
   {id:'q1133',name:'Pain de tradition française (par ex. : baguette, boule…)',gluc:56.7,icon:'🥖',cat:'Féculents'},
   {id:'q1134',name:'Pain blanc précuit, à finir de cuire, préemballé',gluc:53.9,icon:'🥖',cat:'Féculents'},
-  {id:'q1135',name:'Pain bis (à la farine T80 ou T110)',gluc:54.0,icon:'🥖',cat:'Féculents'},
+  {id:'q1135',name:'Pain bis (à la farine T80 ou T110)',gluc:54.0,icon:'🥖',cat:'Féculents'},
   {id:'q1136',name:'Pain sans gluten précuit, à finir de cuire, préemballé',gluc:39.8,icon:'🥖',cat:'Féculents'},
   {id:'q1137',name:'Pain aux céréales et/ou aux graines, préemballé',gluc:39.7,icon:'🥖',cat:'Féculents'},
   {id:'q1138',name:'Pain de campagne, préemballé',gluc:48.7,icon:'🥖',cat:'Féculents'},
@@ -3968,12 +4047,13 @@ function showPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  const idx=['journal','search','calc','history','settings'].indexOf(page);
-  if(idx>=0&&idx<4) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  const idx=['journal','search','calc','recipes','history'].indexOf(page);
+  if(idx>=0) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
   if(page==='journal') renderJournal();
   if(page==='search'){renderCatChips();renderResults();renderPersoList();}
   if(page==='history') renderHistory();
   if(page==='settings') loadSettingsUI();
+  if(page==='recipes') renderRecipeList();
 }
 
 // ── JOURNAL ───────────────────────────────────────────────────
@@ -4287,20 +4367,230 @@ function renderHistory(){
 function loadSettingsUI(){
   const s=loadSettings();
   document.getElementById('set-target').value=s.target||'';
-  document.getElementById('set-ratio').value=s.ratio||'';
+  document.getElementById('set-target').value=s.target||'';
 }
 function saveSettings(){
   const s=loadSettings();
   const target=parseInt(document.getElementById('set-target').value)||0;
-  const ratio=parseFloat(document.getElementById('set-ratio').value)||0;
   if(target) s.target=target; else delete s.target;
-  if(ratio) s.ratio=ratio; else delete s.ratio;
   saveSettingsData(s);
-  // Pre-fill ratio in calc
-  if(ratio) document.getElementById('dose-ratio').value=ratio;
   alert('✅ Réglages sauvegardés !');
   showPage('journal');
 }
+// ── RECETTES ─────────────────────────────────────────────────
+const RECIPES_KEY='glucokid_recipes_v1';
+function loadRecipes(){try{return JSON.parse(localStorage.getItem(RECIPES_KEY)||'[]');}catch{return[];}}
+function saveRecipes(arr){localStorage.setItem(RECIPES_KEY,JSON.stringify(arr));}
+
+let currentRecipe={name:'',ingredients:[],id:null};
+
+function showRecipeEditor(recipeId){
+  if(recipeId){
+    const recipes=loadRecipes();
+    const r=recipes.find(r=>r.id===recipeId);
+    if(!r) return;
+    currentRecipe={...r,ingredients:[...r.ingredients]};
+    document.getElementById('recipe-editor-title').textContent='Modifier la recette';
+  } else {
+    currentRecipe={name:'',ingredients:[],id:null};
+    document.getElementById('recipe-editor-title').textContent='Nouvelle recette';
+  }
+  document.getElementById('recipe-name').value=currentRecipe.name||'';
+  document.getElementById('recipe-total-weight').value='';
+  document.getElementById('recipe-result-card').style.display='none';
+  document.getElementById('recipe-list-section').style.display='none';
+  document.getElementById('recipe-editor').style.display='block';
+  renderRecipeIngredients();
+}
+
+function hideRecipeEditor(){
+  document.getElementById('recipe-editor').style.display='none';
+  document.getElementById('recipe-list-section').style.display='block';
+  document.getElementById('recipe-search-results').style.display='none';
+  renderRecipeList();
+}
+
+function renderRecipeList(){
+  const recipes=loadRecipes();
+  const el=document.getElementById('saved-recipes');
+  const noEl=document.getElementById('no-recipes');
+  if(!recipes.length){
+    el.innerHTML=''; noEl.style.display='block'; return;
+  }
+  noEl.style.display='none';
+  el.innerHTML=recipes.map(r=>{
+    const totalGluc=r.ingredients.reduce((s,i)=>s+i.gluc100*i.qty/100,0);
+    const per100=r.totalWeight?Math.round(totalGluc/r.totalWeight*100*10)/10:null;
+    return `<div class="calc-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:16px;font-weight:900;color:var(--sky-d)">${r.icon||'👨‍🍳'} ${r.name}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="showRecipeEditor('${r.id}')" style="background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:5px 9px;font-size:13px;cursor:pointer">✏️</button>
+          <button onclick="deleteRecipe('${r.id}')" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-l)">🗑️</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-m);font-weight:600;margin-bottom:8px">${r.ingredients.length} ingrédient${r.ingredients.length>1?'s':''} · Total recette : <b>${Math.round(totalGluc)}g de glucides</b></div>
+      ${per100!==null?`<div style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#e0f7fa,#f3e5f5);border-radius:10px;padding:8px 12px">
+        <div style="font-size:13px;font-weight:700;color:var(--text-m)">Pour 100g</div>
+        <div style="font-size:22px;font-weight:900;color:var(--orange)">${per100}g</div>
+      </div>`:''}
+      <button onclick="openAddModalRecipe('${r.id}')" style="width:100%;margin-top:8px;padding:9px;background:var(--sky);border:none;color:white;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border-radius:11px;cursor:pointer">
+        ➕ Ajouter au repas
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function deleteRecipe(id){
+  if(!confirm('Supprimer cette recette ?')) return;
+  saveRecipes(loadRecipes().filter(r=>r.id!==id));
+  renderRecipeList();
+}
+
+function renderRecipeIngredients(){
+  const el=document.getElementById('recipe-ingredients');
+  if(!currentRecipe.ingredients.length){
+    el.innerHTML=`<div style="font-size:12px;color:var(--text-l);font-weight:700;font-style:italic;padding:6px 0">Aucun ingrédient encore</div>`;
+    return;
+  }
+  const totalGluc=currentRecipe.ingredients.reduce((s,i)=>s+i.gluc100*i.qty/100,0);
+  el.innerHTML=currentRecipe.ingredients.map((ingr,idx)=>{
+    const g=Math.round(ingr.gluc100*ingr.qty/100*10)/10;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800;color:var(--text)">${ingr.name}</div>
+        <div style="font-size:12px;color:var(--text-m);font-weight:600">${ingr.qty}g · ${ingr.gluc100}g/100g → <b style="color:var(--sky-d)">${g}g gluc</b></div>
+      </div>
+      <button onclick="removeRecipeIngredient(${idx})" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-l)">✕</button>
+    </div>`;
+  }).join('');
+  el.innerHTML+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0">
+    <div style="font-size:13px;font-weight:800;color:var(--text-m)">Total glucides recette</div>
+    <div style="font-size:20px;font-weight:900;color:var(--sky-d)">${Math.round(totalGluc*10)/10}g</div>
+  </div>`;
+  calcRecipeResult();
+}
+
+function addRecipeIngredient(){
+  const name=document.getElementById('ingr-name').value.trim();
+  const gluc100=parseFloat(document.getElementById('ingr-gluc100').value)||0;
+  const qty=parseFloat(document.getElementById('ingr-qty').value)||0;
+  if(!name){alert('Donne un nom à cet ingrédient !');return;}
+  if(!gluc100&&gluc100!==0){alert('Entre les glucides/100g !');return;}
+  if(!qty){alert('Entre la quantité en grammes !');return;}
+  currentRecipe.ingredients.push({name,gluc100,qty});
+  document.getElementById('ingr-name').value='';
+  document.getElementById('ingr-gluc100').value='';
+  document.getElementById('ingr-qty').value='';
+  document.getElementById('recipe-search').value='';
+  document.getElementById('recipe-search-results').style.display='none';
+  renderRecipeIngredients();
+}
+
+function removeRecipeIngredient(idx){
+  currentRecipe.ingredients.splice(idx,1);
+  renderRecipeIngredients();
+}
+
+function calcRecipeResult(){
+  const totalGluc=currentRecipe.ingredients.reduce((s,i)=>s+i.gluc100*i.qty/100,0);
+  const weight=parseFloat(document.getElementById('recipe-total-weight').value)||0;
+  const card=document.getElementById('recipe-result-card');
+  if(!currentRecipe.ingredients.length){card.style.display='none';return;}
+  card.style.display='block';
+  document.getElementById('recipe-total-gluc').textContent=Math.round(totalGluc*10)/10+'g';
+  if(weight>0){
+    const per100=Math.round(totalGluc/weight*100*10)/10;
+    document.getElementById('recipe-per100').textContent=per100+'g / 100g';
+  } else {
+    document.getElementById('recipe-per100').textContent='(entre le poids cuit)';
+  }
+}
+
+function saveRecipeAsFood(){
+  const name=document.getElementById('recipe-name').value.trim()||'Recette maison';
+  const totalGluc=currentRecipe.ingredients.reduce((s,i)=>s+i.gluc100*i.qty/100,0);
+  const weight=parseFloat(document.getElementById('recipe-total-weight').value)||0;
+  if(!weight){alert('Entre le poids total cuit pour calculer les glucides/100g !');return;}
+  const per100=Math.round(totalGluc/weight*100*10)/10;
+  const perso=loadPerso();
+  perso.push({id:'p_'+Date.now(),name,gluc:per100,icon:'👨‍🍳',cat:'Mes aliments'});
+  savePerso(perso);
+  alert(`✅ "${name}" ajouté dans Mes aliments !\n${per100}g de glucides / 100g`);
+}
+
+function saveRecipe(){
+  const name=document.getElementById('recipe-name').value.trim();
+  if(!name){alert('Donne un nom à ta recette !');return;}
+  if(!currentRecipe.ingredients.length){alert('Ajoute au moins un ingrédient !');return;}
+  const weight=parseFloat(document.getElementById('recipe-total-weight').value)||0;
+  const recipes=loadRecipes();
+  const recipe={
+    id: currentRecipe.id||'r_'+Date.now(),
+    name, icon:'👨‍🍳',
+    ingredients:[...currentRecipe.ingredients],
+    totalWeight:weight,
+    updatedAt:new Date().toISOString()
+  };
+  const idx=recipes.findIndex(r=>r.id===recipe.id);
+  if(idx>=0) recipes[idx]=recipe;
+  else recipes.unshift(recipe);
+  saveRecipes(recipes);
+  hideRecipeEditor();
+}
+
+// Recherche Ciqual dans l'éditeur de recette
+function searchRecipeIngredient(){
+  const q=document.getElementById('recipe-search').value.trim().toLowerCase();
+  const res=document.getElementById('recipe-search-results');
+  if(q.length<2){res.style.display='none';return;}
+  const matches=CIQUAL.filter(f=>f.name.toLowerCase().includes(q)).slice(0,6);
+  if(!matches.length){res.style.display='none';return;}
+  res.style.display='block';
+  res.innerHTML=matches.map(f=>`
+    <div onclick="selectRecipeIngredient('${f.name.replace(/'/g,"\\'").replace(/"/g,'&quot;')}',${f.gluc})"
+      style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <span style="font-size:18px">${f.icon}</span>
+      <div>
+        <div style="color:var(--text)">${f.name}</div>
+        <div style="color:var(--text-m);font-size:11px">${f.gluc}g / 100g</div>
+      </div>
+    </div>`).join('');
+}
+
+function selectRecipeIngredient(name, gluc){
+  document.getElementById('ingr-name').value=name;
+  document.getElementById('ingr-gluc100').value=gluc;
+  document.getElementById('recipe-search').value=name;
+  document.getElementById('recipe-search-results').style.display='none';
+  document.getElementById('ingr-qty').focus();
+}
+
+// Ajouter une recette sauvegardée directement au repas
+function openAddModalRecipe(id){
+  const r=loadRecipes().find(r=>r.id===id);
+  if(!r) return;
+  const totalGluc=r.ingredients.reduce((s,i)=>s+i.gluc100*i.qty/100,0);
+  const per100=r.totalWeight?Math.round(totalGluc/r.totalWeight*100*10)/10:null;
+  if(!per100){alert('Sauvegarde d\'abord le poids total cuit pour pouvoir ajouter au repas !');return;}
+  const food={name:r.name, gluc:per100, icon:'👨‍🍳'};
+  state.selectedFood=food;
+  document.getElementById('modal-food-header').innerHTML=`
+    <div class="modal-food-icon">👨‍🍳</div>
+    <div class="modal-food-info">
+      <div class="modal-food-name">${food.name}</div>
+      <div class="modal-food-g100">${per100} g de glucides / 100 g</div>
+    </div>
+    <div class="modal-gluc-res" id="gluc-preview">${per100}<small>g</small></div>`;
+  document.getElementById('add-qty').value=100;
+  document.getElementById('meal-selector').innerHTML=MEALS.map(m=>`
+    <button class="meal-sel-btn ${state.selectedMeal===m.key?'selected':''}" onclick="selectMeal('${m.key}')">
+      <span class="ms-icon">${m.icon}</span>${m.label}
+    </button>`).join('');
+  document.getElementById('modal-add').classList.add('visible');
+}
+
 function clearToday(){
   if(!confirm('Effacer tout le journal d\'aujourd\'hui ?'))return;
   const j=loadJournal(); delete j[todayKey()]; localStorage.setItem(JOURNAL_KEY,JSON.stringify(j));
