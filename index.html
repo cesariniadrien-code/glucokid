@@ -301,6 +301,56 @@ nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:stic
       </div>
       <div id="search-results" class="food-grid"></div>
 
+      <!-- OPEN FOOD FACTS -->
+      <div class="off-box" style="margin-top:14px">
+        <div class="off-title">📦 Open Food Facts <span style="font-size:11px;font-weight:600;color:var(--text-m)">produits du commerce</span></div>
+
+        <!-- Recherche par nom -->
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:800;color:var(--text-m);text-transform:uppercase;margin-bottom:7px">🔍 Rechercher par nom</div>
+          <div style="display:flex;gap:8px">
+            <input class="off-input" type="text" id="off-search-input" placeholder="Nutella, Oreo, Penne Barilla…" style="flex:1"
+              onkeydown="if(event.key==='Enter') searchOFFByName()">
+            <button class="btn-off" onclick="searchOFFByName()" style="white-space:nowrap">🔍</button>
+          </div>
+        </div>
+
+        <!-- Scan code-barres -->
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button onclick="startBarcodeScanner()" id="btn-start-scan"
+            style="flex:1;padding:9px;background:linear-gradient(135deg,var(--sky),var(--sky-d));border:none;color:white;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border-radius:12px;cursor:pointer">
+            📷 Scanner code-barres
+          </button>
+          <button onclick="document.getElementById('barcode-manual-box').style.display=document.getElementById('barcode-manual-box').style.display==='none'?'block':'none'"
+            style="padding:9px 12px;background:var(--bg);border:2px solid var(--border);border-radius:12px;font-size:15px;cursor:pointer">
+            #️⃣
+          </button>
+        </div>
+
+        <!-- Saisie manuelle code-barres (caché par défaut) -->
+        <div id="barcode-manual-box" style="display:none;background:var(--bg);border-radius:13px;padding:10px;border:2px dashed var(--border);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:800;color:var(--text-m);text-transform:uppercase;margin-bottom:7px">Code-barres manuel</div>
+          <div style="display:flex;gap:8px">
+            <input class="off-input" type="number" id="barcode-input" placeholder="ex: 3017620422003" inputmode="numeric" style="flex:1">
+            <button class="btn-off" onclick="searchBarcode(document.getElementById('barcode-input').value)">OK</button>
+          </div>
+        </div>
+
+        <!-- Lecteur vidéo -->
+        <div id="scanner-container" style="display:none;margin-bottom:10px">
+          <div style="position:relative;border-radius:14px;overflow:hidden;background:#000">
+            <video id="scanner-video" style="width:100%;display:block;border-radius:14px" playsinline></video>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:40%;border:3px solid var(--sun);border-radius:10px;box-shadow:0 0 0 2000px rgba(0,0,0,.4);pointer-events:none"></div>
+            <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center;color:white;font-size:12px;font-weight:700">Centre le code-barres dans le cadre</div>
+          </div>
+          <button onclick="stopBarcodeScanner()" style="width:100%;margin-top:8px;padding:10px;background:#ffebee;border:2px solid #ef9a9a;border-radius:12px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:#c62828;cursor:pointer">✕ Arrêter</button>
+        </div>
+
+        <!-- Status + résultats -->
+        <div id="off-status" class="off-status"></div>
+        <div id="off-result" style="margin-top:8px"></div>
+      </div>
+
       <!-- MES ALIMENTS -->
       <div class="off-box" style="margin-top:14px">
         <div class="off-title">⭐ Mes aliments</div>
@@ -3230,6 +3280,164 @@ function sendManualToCalc(){
   sendToCalc(name||'Produit', gluc);
   document.getElementById('manual-name').value='';
   document.getElementById('manual-gluc100').value='';
+}
+
+// ── OPEN FOOD FACTS via Cloudflare Worker ──────────────────
+const OFF_WORKER='https://glucokid-off.cesarini-adrien.workers.dev/';
+let scannerStream=null;
+let scannerInterval=null;
+
+function setOFFStatus(html){ const el=document.getElementById('off-status'); if(el) el.innerHTML=html; }
+
+async function searchOFFByName(){
+  const q=document.getElementById('off-search-input').value.trim();
+  if(!q||q.length<2){alert('Tape au moins 2 caractères !');return;}
+  setOFFStatus('<span class="spinner"></span> Recherche "'+q+'" dans Open Food Facts…');
+  document.getElementById('off-result').innerHTML='';
+  try{
+    const resp=await fetch(OFF_WORKER+'?search='+encodeURIComponent(q));
+    if(!resp.ok) throw new Error('Erreur réseau ('+resp.status+')');
+    const text=await resp.text();
+    let data;
+    try{ data=JSON.parse(text); }
+    catch(e){ throw new Error('Réponse invalide du serveur — réessaie dans quelques secondes'); }
+    if(data.error) throw new Error(data.error);
+    // API v2 : products dans data.products
+    const products=(data.products||[]).filter(p=>{
+      const n=p.nutriments||{};
+      return (n['carbohydrates_100g']!=null)||(n['carbohydrates']!=null);
+    });
+    if(!products.length) throw new Error('Aucun résultat avec données glucides pour "'+q+'"');
+    setOFFStatus('✅ '+products.length+' résultat'+(products.length>1?'s':'')+' trouvé'+(products.length>1?'s':''));
+    document.getElementById('off-result').innerHTML=products.map(p=>{
+      const name=(p.product_name_fr||p.product_name||'').trim()||'Produit inconnu';
+      const brand=p.brands?(p.brands.split(',')[0].trim()):'';
+      const nutriments=p.nutriments||{};
+      const gluc=Math.round((parseFloat(nutriments['carbohydrates_100g']??nutriments['carbohydrates'])||0)*10)/10;
+      const safeName=(name+(brand?' - '+brand:'')).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const displayName=name+(brand?` <span style="color:var(--text-l);font-size:11px;font-weight:600">${brand}</span>`:'');
+      return `<div class="food-card" style="border-color:var(--sky);margin-bottom:6px">
+        <div class="food-card-icon">📦</div>
+        <div class="food-card-info">
+          <div class="food-card-name">${displayName}</div>
+          <div class="food-card-cat">Open Food Facts</div>
+        </div>
+        <div class="food-card-gluc">${gluc}<small>g/100g</small></div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button onclick="sendToCalc('${safeName}',${gluc})" title="Calculatrice"
+            style="background:var(--orange);border:none;color:white;font-size:14px;cursor:pointer;padding:5px 7px;border-radius:8px;font-weight:800">🧮</button>
+          <button onclick="addOFFToJournal('${safeName}',${gluc})" title="Ajouter au repas"
+            style="background:var(--sky);border:none;color:white;font-size:14px;cursor:pointer;padding:5px 7px;border-radius:8px;font-weight:800">➕</button>
+          <button onclick="saveOFFToPerso('${safeName}',${gluc})" title="Sauvegarder"
+            style="background:var(--bg);border:2px solid var(--border);font-size:14px;cursor:pointer;padding:3px 7px;border-radius:8px">⭐</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    setOFFStatus('❌ '+e.message);
+  }
+}
+
+async function searchBarcode(code){
+  code=(code||'').toString().trim().replace(/\D/g,'');
+  if(!code||code.length<8){alert('Code-barres invalide (min 8 chiffres)');return;}
+  setOFFStatus('<span class="spinner"></span> Recherche du produit…');
+  document.getElementById('off-result').innerHTML='';
+  try{
+    const resp=await fetch(OFF_WORKER+'?code='+code);
+    if(!resp.ok) throw new Error('Erreur réseau');
+    const data=await resp.json();
+    if(data.status===0||!data.product) throw new Error('Produit introuvable dans Open Food Facts');
+    const p=data.product;
+    const name=p.product_name_fr||p.product_name||'Produit inconnu';
+    const nutriments=p.nutriments||{};
+    const gluc=nutriments['carbohydrates_100g']??nutriments['carbohydrates']??null;
+    if(gluc===null) throw new Error('Glucides non renseignés pour ce produit');
+    const gluc100=Math.round(parseFloat(gluc)*10)/10;
+    setOFFStatus('✅ Produit trouvé !');
+    const safeName=name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    document.getElementById('off-result').innerHTML=`
+      <div class="food-card" style="border-color:var(--sky);margin-top:4px">
+        <div class="food-card-icon">📦</div>
+        <div class="food-card-info">
+          <div class="food-card-name">${name}</div>
+          <div class="food-card-cat">Open Food Facts</div>
+        </div>
+        <div class="food-card-gluc">${gluc100}<small>g/100g</small></div>
+        <button onclick="sendToCalc('${safeName}',${gluc100})" title="Calculatrice"
+          style="background:var(--orange);border:none;color:white;font-size:16px;cursor:pointer;padding:6px 8px;border-radius:10px;flex-shrink:0;font-weight:800">🧮</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="addOFFToJournal('${safeName}',${gluc100})"
+          style="flex:1;padding:9px;background:var(--sky);border:none;color:white;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border-radius:11px;cursor:pointer">➕ Ajouter au repas</button>
+        <button onclick="saveOFFToPerso('${safeName}',${gluc100})"
+          style="flex:1;padding:9px;background:var(--bg-card);border:2px solid var(--border);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border-radius:11px;cursor:pointer;color:var(--text-m)">⭐ Sauvegarder</button>
+      </div>`;
+    stopBarcodeScanner();
+  }catch(e){
+    setOFFStatus('❌ '+e.message);
+  }
+}
+
+function addOFFToJournal(name, gluc){
+  const food={name,gluc,icon:'📦'};
+  state.selectedFood=food;
+  document.getElementById('modal-food-header').innerHTML=`
+    <div class="modal-food-icon">📦</div>
+    <div class="modal-food-info">
+      <div class="modal-food-name">${name}</div>
+      <div class="modal-food-g100">${gluc} g de glucides / 100 g</div>
+    </div>
+    <div class="modal-gluc-res" id="gluc-preview">${gluc}<small>g</small></div>`;
+  document.getElementById('add-qty').value=100;
+  updateGlucPreview();
+  document.getElementById('meal-selector').innerHTML=MEALS.map(m=>`
+    <button class="meal-sel-btn ${state.selectedMeal===m.key?'selected':''}" onclick="selectMeal('${m.key}')">
+      <span class="ms-icon">${m.icon}</span>${m.label}
+    </button>`).join('');
+  document.getElementById('modal-add').classList.add('visible');
+}
+
+function saveOFFToPerso(name, gluc){
+  const perso=loadPerso();
+  if(perso.find(p=>p.name===name)){alert('Déjà dans Mes aliments !');return;}
+  perso.push({id:'p_'+Date.now(),name,gluc,icon:'📦',cat:'Mes aliments'});
+  savePerso(perso);
+  alert('✅ "'+name+'" ajouté dans Mes aliments !');
+}
+
+// ── SCAN CODE-BARRES caméra ────────────────────────────────
+async function startBarcodeScanner(){
+  if(!('BarcodeDetector' in window)){
+    setOFFStatus('⚠️ Scan caméra non supporté sur ce navigateur.<br>Utilise Chrome sur Android ou saisis le code manuellement.');
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    scannerStream=stream;
+    const video=document.getElementById('scanner-video');
+    video.srcObject=stream;
+    await video.play();
+    document.getElementById('scanner-container').style.display='block';
+    document.getElementById('btn-start-scan').style.display='none';
+    setOFFStatus('<span class="spinner"></span> Pointe vers le code-barres…');
+    const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39']});
+    scannerInterval=setInterval(async()=>{
+      try{
+        const codes=await detector.detect(video);
+        if(codes.length>0){ clearInterval(scannerInterval); searchBarcode(codes[0].rawValue); }
+      }catch(e){}
+    },400);
+  }catch(e){
+    setOFFStatus('❌ Accès caméra refusé — autorise-le dans les réglages du navigateur.');
+  }
+}
+
+function stopBarcodeScanner(){
+  if(scannerInterval){clearInterval(scannerInterval);scannerInterval=null;}
+  if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;}
+  const c=document.getElementById('scanner-container'); if(c) c.style.display='none';
+  const b=document.getElementById('btn-start-scan'); if(b) b.style.display='block';
 }
 
 // ── MES ALIMENTS PERSONNALISÉS ────────────────────────────────
