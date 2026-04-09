@@ -3,21 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>GlucoKid 🌟</title>
-<!-- PWA -->
+<title>Louise 💙 Diabète</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GlucoKid">
+<meta name="apple-mobile-web-app-title" content="Louise">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0288d1">
-<meta name="description" content="Application de suivi des glucides pour enfants diabétiques">
+<meta name="theme-color" content="#1756a0">
 <link rel="manifest" id="pwa-manifest">
-<!-- Icône Apple (générée via canvas) -->
 <link rel="apple-touch-icon" id="apple-icon">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-<!-- ZXing for iOS Safari barcode scanning -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js"></script>
 <style>
+/* ══════════════════════════════════════════
+   VARIABLES GLOBALES
+══════════════════════════════════════════ */
+:root {
+  /* GlucoKid palette */
+  --sky:#4fc3f7; --sky-d:#0288d1;
+  --sun:#ffca28; --sun-d:#f9a825;
+  --green:#66bb6a; --green-d:#388e3c;
+  --pink:#f48fb1; --pink-d:#c2185b;
+  --purple:#ce93d8; --purple-d:#7b1fa2;
+  --orange:#ffb74d; --orange-d:#e65100;
+  --red:#ef5350;
+  --bg:#e8f4fd; --card:#fff; --surface2:#f5f9ff;
+  --text:#1a237e; --text-m:#5c6bc0; --text-l:#9fa8da;
+  --border:#e3f2fd; --radius:20px;
+  /* Pompe palette */
+  --p-primary:#1756a0; --p-primary-dark:#0f3d75; --p-primary-light:#deeaf8;
+  --p-accent:#d94f2b;  --p-accent-light:#fdeee9;
+  --p-success:#1a8a5a; --p-success-light:#e4f7ef;
+  --p-warning:#c97d0a; --p-warning-light:#fef3e2;
+  --p-info:#6d28d9;    --p-info-light:#ede9fe;
+  --p-rose:#d63f8a;    --p-rose-light:#fdeef6;
+  --p-teal:#0e7490;    --p-teal-light:#ecfeff;
+  --p-bg:#edf2f7; --p-card:#fff; --p-text:#18243a; --p-soft:#5a6b7c; --p-border:#cdd8e8; --p-changed:#fffbea;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:#edf2f7;color:#18243a;min-height:100vh;overflow-x:hidden}
+
+/* ══════════════════════════════════════════
+   APP ROUTING
+══════════════════════════════════════════ */
+.app-root{display:none;min-height:100vh}
+.app-root.active{display:block}
+#app-gk{background:var(--bg);color:var(--text)}
+
+/* ══════════════════════════════════════════
+   ACCUEIL
+══════════════════════════════════════════ */
+.home-bg{background:linear-gradient(160deg,#0e3872 0%,#1756a0 45%,#2563c4 100%);padding:44px 20px 90px;text-align:center;position:relative;overflow:hidden}
+.home-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 75% 25%,rgba(232,70,138,.3) 0%,transparent 55%)}
+.hstar{position:absolute;border-radius:50%;background:#fff;opacity:.18;animation:twinkle 3s infinite}
+@keyframes twinkle{0%,100%{opacity:.12}50%{opacity:.28}}
+.home-avatar{width:90px;height:90px;border-radius:28px;margin:0 auto 16px;background:linear-gradient(135deg,#e8468a,#ff7eb8);display:flex;align-items:center;justify-content:center;font-size:48px;box-shadow:0 10px 36px rgba(232,70,138,.55);position:relative;z-index:1}
+.home-name{font-size:38px;font-weight:900;letter-spacing:-.5px;color:#fff;position:relative;z-index:1}
+.home-sub{font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.8px;margin-top:4px;position:relative;z-index:1}
+.home-body{max-width:480px;margin:-52px auto 0;padding:0 14px 20px;position:relative;z-index:5}
+.home-card{background:#fff;border-radius:22px;padding:20px 18px;margin-bottom:12px;box-shadow:0 10px 36px rgba(0,0,0,.13);cursor:pointer;display:flex;align-items:center;gap:16px;transition:transform .18s,box-shadow .18s;border:2px solid transparent;-webkit-tap-highlight-color:transparent}
+.home-card:active{transform:scale(.98)}
+.home-card.c1{border-color:#e0eefb}.home-card.c2{border-color:var(--p-rose-light)}
+.hc-icon{width:58px;height:58px;border-radius:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px}
+.home-card.c1 .hc-icon{background:var(--p-primary-light)}.home-card.c2 .hc-icon{background:var(--p-rose-light)}
+.hc-text{flex:1}.hc-title{font-size:17px;font-weight:900;margin-bottom:3px}
+.home-card.c1 .hc-title{color:var(--p-primary)}.home-card.c2 .hc-title{color:var(--p-rose)}
+.hc-desc{font-size:12px;color:var(--p-soft);line-height:1.4}
+.hc-arrow{font-size:22px;color:#ccd8e8;font-weight:900}
+.home-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px;margin:0 auto;padding:0 14px 40px}
+.hs{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);text-align:center}
+.hs-num{font-size:28px;font-weight:900;color:var(--p-primary)}.hs-lbl{font-size:11px;color:var(--p-soft);margin-top:2px}
 :root {
   --sky:#4fc3f7; --sky-d:#0288d1;
   --sun:#ffca28; --sun-d:#f9a825;
@@ -31,7 +85,10 @@
   --border:#e3f2fd; --radius:20px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+/* Le #app-gk reprend le flex-column que GlucoKid attendait sur body */
+#app-gk{display:none;flex-direction:column;background:var(--bg);color:var(--text);min-height:100vh}
+#app-gk.active{display:flex}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(79,195,247,.15) 0%,transparent 40%),radial-gradient(circle at 90% 80%,rgba(255,202,40,.12) 0%,transparent 40%);pointer-events:none;z-index:0}
 
 /* HEADER */
@@ -245,11 +302,196 @@ nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:stic
 /* SPINNER */
 .spinner{display:inline-block;width:16px;height:16px;border:3px solid rgba(0,0,0,.1);border-top-color:var(--sky-d);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+
+/* ══════════════════════════════════════════
+   POMPE — COMPOSANTS
+══════════════════════════════════════════ */
+#app-pompe{background:var(--p-bg);font-family:'Nunito',sans-serif;color:var(--p-text)}
+/* Top bar */
+.p-topbar{background:linear-gradient(135deg,#1756a0,#0e3872);color:#fff;padding:12px 14px 0;box-shadow:0 4px 24px rgba(15,56,114,.45);position:sticky;top:0;z-index:100}
+.p-toprow{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.p-back{background:rgba(255,255,255,.18);border:none;border-radius:10px;padding:7px 13px;color:#fff;cursor:pointer;font-size:16px;font-family:'Nunito',sans-serif;font-weight:800}
+.p-tbicon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.p-tbinfo{flex:1}
+.p-tblabel{font-size:9px;letter-spacing:2px;text-transform:uppercase;opacity:.65}
+.p-tbtitle{font-size:17px;font-weight:900;line-height:1.1}
+.p-tbsub{font-size:11px;opacity:.65;margin-top:1px}
+.p-tbbadge{text-align:center;background:rgba(255,255,255,.14);border-radius:10px;padding:6px 12px;min-width:52px}
+.p-tbbadgenum{font-size:20px;font-weight:900;line-height:1}
+.p-tbbadgelbl{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.8px}
+/* Tabs */
+.p-tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.p-tabs::-webkit-scrollbar{display:none}
+.p-tab{padding:9px 12px;border:none;cursor:pointer;white-space:nowrap;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;display:flex;gap:4px;align-items:center;background:transparent;color:rgba(255,255,255,.75);border-radius:9px 9px 0 0;transition:.15s;flex-shrink:0}
+.p-tab.active{background:var(--p-bg);color:var(--p-primary)}
+/* Banner */
+.p-banner{background:#fff;border-bottom:1px solid var(--p-border);padding:7px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--p-soft)}
+/* Main */
+.p-main{max-width:760px;margin:0 auto;padding:18px 14px 60px}
+.p-card{background:var(--p-card);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.p-card.al{border-left:5px solid var(--p-primary)}
+.p-card.al.hyper-c{border-left-color:var(--p-accent)}
+.p-card.al.bolus-c{border-left-color:var(--p-info)}
+.p-card.al.basal-c{border-left-color:var(--p-warning)}
+.p-slbl{font-size:10px;color:var(--p-soft);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:800}
+/* Pills */
+.ppill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.ppill-s{background:var(--p-success-light);color:var(--p-success)}
+.ppill-w{background:var(--p-warning-light);color:var(--p-warning)}
+.ppill-a{background:var(--p-accent-light);color:var(--p-accent)}
+.ppill-p{background:var(--p-primary-light);color:var(--p-primary)}
+.ppill-pk{background:var(--p-rose-light);color:var(--p-rose)}
+/* Saisie */
+.p-daterow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.p-datebig{font-size:19px;font-weight:800;color:var(--p-primary)}
+input[type=date]{padding:8px 12px;border:1.5px solid var(--p-border);border-radius:9px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--p-text);background:#fff;outline:none}
+/* Diff alert */
+.p-diffalert{background:var(--p-warning-light);border:1.5px solid var(--p-warning);border-radius:11px;padding:10px 14px;margin-bottom:14px;font-size:13px}
+.p-diffchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.p-diffchip{background:#fff;border:1px solid var(--p-warning);border-radius:7px;padding:2px 8px;font-size:12px}
+/* Slots table */
+.p-slotstable{border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.p-slotshead{background:var(--p-primary);color:#fff;display:grid;grid-template-columns:62px 1fr 1fr 1fr;gap:6px;padding:10px 12px;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
+.p-slotsrow{display:grid;grid-template-columns:62px 1fr 1fr 1fr;gap:6px;padding:7px 12px;border-bottom:1px solid var(--p-border);align-items:center;background:#fff;transition:.2s}
+.p-slotsrow.changed{background:var(--p-changed)}
+.p-slotsrow:last-child{border-bottom:none}
+.p-timecell{font-family:'DM Mono',monospace;font-weight:500;font-size:13px;color:var(--p-primary)}
+/* Slot selects — basal & ratio */
+.slot-sel{width:100%;padding:5px 4px;border:1.5px solid var(--p-border);border-radius:7px;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;background:#fff;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%235a6b7c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:20px;transition:.2s}
+.slot-sel:focus{border-color:var(--p-primary)}
+.slot-sel.changed{border-color:var(--p-warning);background-color:var(--p-changed)}
+/* Event select */
+.note-sel{width:100%;padding:5px 4px;border:1.5px solid var(--p-border);border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;background:#fff;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%235a6b7c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:18px}
+.note-sel.has-hypo{border-color:var(--p-primary);background-color:var(--p-primary-light);color:var(--p-primary)}
+.note-sel.has-hyper{border-color:var(--p-accent);background-color:var(--p-accent-light);color:var(--p-accent)}
+.note-sel.has-hypo-basal{border-color:var(--p-teal);background-color:var(--p-teal-light);color:var(--p-teal)}
+.note-sel.has-hyper-basal{border-color:var(--p-info);background-color:var(--p-info-light);color:var(--p-info)}
+/* Matériel */
+.p-matgrid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.p-matbtn{padding:7px 14px;border-radius:20px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;transition:.15s;border:1.5px solid var(--p-border);background:#fff;color:var(--p-soft)}
+.p-matbtn.on{border-color:var(--p-accent);background:var(--p-accent-light);color:var(--p-accent)}
+.p-textarea{width:100%;padding:9px 11px;border:1.5px solid var(--p-border);border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;resize:vertical;outline:none;background:#fff}
+.p-textarea:focus{border-color:var(--p-primary)}
+.p-savebtn{width:100%;padding:15px;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:.3s;background:linear-gradient(135deg,var(--p-primary),var(--p-primary-dark));color:#fff;box-shadow:0 4px 16px rgba(23,86,160,.38)}
+.p-savebtn.ok{background:linear-gradient(135deg,var(--p-success),#136e47);box-shadow:none}
+/* J+1 panel */
+.j1-panel{background:#fff;border-radius:16px;margin-bottom:14px;box-shadow:0 4px 24px rgba(214,63,138,.25);border:2px solid var(--p-rose);overflow:hidden;animation:j1in .3s ease}
+@keyframes j1in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.j1-head{background:linear-gradient(135deg,var(--p-rose),#c0307a);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:10px}
+.j1-title{font-size:15px;font-weight:900;flex:1}
+.j1-body{padding:14px}
+.j1-row{display:flex;align-items:center;gap:8px;padding:9px 12px;margin-bottom:6px;border-radius:9px;flex-wrap:wrap;border:1px solid var(--p-border)}
+.j1-row.hypo-r{background:var(--p-primary-light);border-color:#9ec4e8}
+.j1-row.hyper-r{background:var(--p-accent-light);border-color:#f0b9a8}
+.j1-t{font-family:'DM Mono',monospace;font-weight:500;font-size:14px;color:var(--p-primary);min-width:52px}
+.j1-f{font-size:11px;background:#fff;padding:2px 8px;border-radius:5px;border:1px solid var(--p-border);color:var(--p-soft)}
+.j1-from{font-family:'DM Mono',monospace;font-size:14px;color:#bbb;text-decoration:line-through}
+.j1-to{font-family:'DM Mono',monospace;font-size:15px;font-weight:800}
+.j1-to.hypo{color:var(--p-primary)}.j1-to.hyper{color:var(--p-accent)}
+.j1-reason{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.j1-reason.hypo{background:var(--p-primary-light);color:var(--p-primary)}.j1-reason.hyper{background:var(--p-accent-light);color:var(--p-accent)}
+.j1-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.j1-apply{flex:1;padding:11px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--p-rose),#c0307a);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 3px 12px rgba(214,63,138,.35)}
+.j1-dismiss{padding:11px 16px;border:1.5px solid var(--p-border);border-radius:10px;background:#fff;color:var(--p-soft);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.j1-info{background:var(--p-rose-light);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--p-rose);margin-bottom:10px;line-height:1.5}
+/* Historique pompe */
+.p-histitem{background:var(--p-card);border-radius:13px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;border-left:4px solid var(--p-primary-light);transition:.15s}
+.p-histitem:active{transform:scale(.99)}
+.p-histitem.has-diffs{border-left-color:var(--p-warning)}.p-histitem.has-j1{border-left-color:var(--p-rose)}
+.p-histtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.p-histdate{font-size:16px;font-weight:800;color:var(--p-primary)}
+.p-histmods{font-size:11px;color:var(--p-warning);margin-top:2px;font-weight:700}
+.p-histpills{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.p-slotsmini{display:flex;flex-wrap:wrap;gap:5px}
+.p-slotmini{background:var(--p-primary-light);border-radius:8px;padding:5px 8px;border:1px solid var(--p-border)}
+.p-slotmini.changed{background:var(--p-warning-light);border-color:var(--p-warning)}
+.p-slotmini .st{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--p-primary)}
+.p-slotmini .sv{font-size:11px;font-weight:700}
+.p-histnote{margin-top:7px;font-size:12px;color:var(--p-soft);font-style:italic}
+/* Comparaison */
+.p-cmphead{background:linear-gradient(135deg,var(--p-primary),var(--p-primary-dark));color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:14px 14px 0 0}
+.p-cmpcol{text-align:center}
+.p-cmpcol .cl{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.8px}
+.p-cmpcol .cv{font-weight:800;font-size:14px}
+.p-diffrow{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:6px;background:var(--p-warning-light);border-radius:9px;border:1px solid var(--p-warning);flex-wrap:wrap}
+.dr-time{font-family:'DM Mono',monospace;font-weight:500;color:var(--p-primary);min-width:50px;font-size:14px}
+.dr-field{font-size:12px;color:var(--p-soft);background:#fff;padding:2px 8px;border-radius:5px;border:1px solid var(--p-border)}
+.dr-from{font-family:'DM Mono',monospace;font-size:14px;color:#bbb;text-decoration:line-through}
+.dr-to{font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--p-accent)}
+/* Rappels */
+.p-ricon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.p-exbox{font-family:'DM Mono',monospace;font-size:15px;background:#fff;border-radius:9px;padding:11px 14px;border:2px dashed currentColor;margin:8px 0;text-align:center}
+.p-tbadge{display:inline-flex;align-items:center;gap:7px;background:var(--p-success-light);color:var(--p-success);border-radius:9px;padding:7px 16px;font-size:13px;font-weight:800}
+.p-rulerow{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:6px;border-radius:9px;border:1px solid var(--p-border)}
+.p-stepbadge{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;background:#fff;padding:4px 12px;border-radius:7px;border:1.5px solid currentColor}
+/* Paramètres pompe */
+.p-slotmanrow{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:6px;background:var(--p-primary-light);border-radius:10px;border:1px solid var(--p-border)}
+.p-sml{display:flex;align-items:center;gap:10px}
+.p-smdot{width:9px;height:9px;border-radius:50%;background:var(--p-primary)}
+.p-smt{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--p-primary)}
+.p-delbtn{background:none;border:1.5px solid var(--p-accent);border-radius:7px;color:var(--p-accent);padding:4px 14px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700}
+.p-addrow{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:16px}
+.p-addrow>div{flex:1;min-width:120px}
+input[type=time]{padding:10px 12px;border:1.5px solid var(--p-border);border-radius:9px;font-family:'DM Mono',monospace;font-size:15px;background:#fff;outline:none}
+.p-addbtn{padding:10px 22px;background:linear-gradient(135deg,var(--p-primary),var(--p-primary-dark));color:#fff;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 10px rgba(23,86,160,.3)}
+.p-infobox{background:var(--p-info-light);border:1px solid #c4b5fd;border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--p-info);line-height:1.9}
+.p-dangerbox{border:2px solid var(--p-accent);border-radius:14px;padding:16px;margin-bottom:14px;background:var(--p-card)}
+.p-resetbtn{padding:9px 20px;background:#fff;border:2px solid var(--p-accent);border-radius:9px;color:var(--p-accent);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer}
+.p-select{width:100%;padding:10px 12px;border:1.5px solid var(--p-border);border-radius:9px;font-family:'Nunito',sans-serif;font-size:14px;background:#fff;color:var(--p-text);outline:none;cursor:pointer}
+.p-empty{text-align:center;padding:60px 20px;color:var(--p-soft)}
+.p-nodiffs{text-align:center;color:var(--p-success);padding:20px;background:var(--p-success-light);border-radius:10px;font-weight:700;font-size:14px}
+@keyframes p-fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.p-tabcontent{animation:p-fadein .2s ease}
+@media(max-width:480px){
+  .p-slotshead,.p-slotsrow{grid-template-columns:56px 1fr 1fr 1fr;gap:4px}
+  .p-slotshead{font-size:9px}.p-timecell{font-size:12px}.slot-sel{font-size:12px;padding:4px 2px}
+}
 </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════════
+     ACCUEIL
+════════════════════════════════════ -->
+<div id="app-home" class="app-root active">
+  <div class="home-bg" id="homeBg">
+    <div class="home-avatar">👧</div>
+    <div class="home-name">Louise</div>
+    <div class="home-sub">Espace Diabète · Suivi complet</div>
+  </div>
+  <div class="home-body">
+    <div class="home-card c1" onclick="openApp('gk')">
+      <div class="hc-icon">🦊</div>
+      <div class="hc-text">
+        <div class="hc-title">GlucoKid</div>
+        <div class="hc-desc">Journal des repas, recherche CIQUAL, scanner code-barres, calcul de glucides et recettes</div>
+      </div>
+      <div class="hc-arrow">›</div>
+    </div>
+    <div class="home-card c2" onclick="openApp('pompe')">
+      <div class="hc-icon">💉</div>
+      <div class="hc-text">
+        <div class="hc-title">Suivi Pompe</div>
+        <div class="hc-desc">Réglages basal / ratio par créneaux horaires, suggestions J+1 automatiques</div>
+      </div>
+      <div class="hc-arrow">›</div>
+    </div>
+  </div>
+  <div class="home-stats">
+    <div class="hs"><div class="hs-num" id="statGlucToday">–</div><div class="hs-lbl">glucides aujourd'hui</div></div>
+    <div class="hs"><div class="hs-num" id="statJours">0</div><div class="hs-lbl">jours pompe</div></div>
+    <div class="hs"><div class="hs-num" id="statLastEntry">–</div><div class="hs-lbl">dernière saisie</div></div>
+    <div class="hs"><div class="hs-num" id="statJ1">–</div><div class="hs-lbl">sugg. J+1 en attente</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     GLUCOKID
+════════════════════════════════════ -->
+<div id="app-gk" class="app-root">
 <header>
+  <button onclick="goHome()" style="background:rgba(255,255,255,.2);border:none;border-radius:10px;padding:6px 12px;color:#fff;cursor:pointer;font-size:14px;font-family:Nunito,sans-serif;font-weight:800;flex-shrink:0">← Accueil</button>
   <div class="logo">Gluco<span>Kid</span> 🌟</div>
   <div class="header-right">
     <div class="date-bubble" id="header-date">—</div>
@@ -588,6 +830,171 @@ nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:stic
 
 </div>
 
+</div><!-- /app-gk -->
+
+<!-- ═══════════════════════════════════
+     SUIVI POMPE
+════════════════════════════════════ -->
+<div id="app-pompe" class="app-root">
+  <div class="p-topbar">
+    <div class="p-toprow">
+      <button class="p-back" onclick="goHome()">← Accueil</button>
+      <div class="p-tbicon" style="background:var(--p-rose-light)">💉</div>
+      <div class="p-tbinfo">
+        <div class="p-tblabel">Louise · Pompe à insuline</div>
+        <div class="p-tbtitle">Suivi des Réglages</div>
+        <div class="p-tbsub" id="pompeSub"></div>
+      </div>
+      <div class="p-tbbadge">
+        <div class="p-tbbadgenum" id="pompeBadgeNum">0</div>
+        <div class="p-tbbadgelbl">jour<span id="pompeBadgeS"></span></div>
+      </div>
+    </div>
+    <div class="p-tabs">
+      <button class="p-tab active" onclick="switchPompe('saisie')"      id="ptab-saisie">✏️ Saisie</button>
+      <button class="p-tab"        onclick="switchPompe('historique')"  id="ptab-historique">📋 Historique</button>
+      <button class="p-tab"        onclick="switchPompe('comparaison')" id="ptab-comparaison">🔍 Comparer</button>
+      <button class="p-tab"        onclick="switchPompe('rappels')"     id="ptab-rappels">📖 Rappels</button>
+      <button class="p-tab"        onclick="switchPompe('parametres')"  id="ptab-parametres">⚙️ Paramètres</button>
+    </div>
+  </div>
+  <div class="p-banner" id="pompeBanner" style="display:none"></div>
+  <div class="p-main">
+
+    <!-- SAISIE -->
+    <div id="pv-saisie" class="p-tabcontent">
+      <div class="j1-panel" id="j1Panel" style="display:none">
+        <div class="j1-head">
+          <div style="font-size:22px">✨</div>
+          <div style="flex:1"><div class="j1-title">Suggestions J+1</div><div style="font-size:11px;opacity:.8">Calculées depuis les événements d'aujourd'hui</div></div>
+          <button onclick="dismissJ1()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:5px 10px;color:#fff;cursor:pointer;font-size:16px;font-family:'Nunito',sans-serif;font-weight:800">✕</button>
+        </div>
+        <div class="j1-body">
+          <div class="j1-info">💡 Valeurs calculées selon le protocole. Vérifier avec l'équipe médicale avant d'appliquer.</div>
+          <div id="j1Suggestions"></div>
+          <div class="j1-actions">
+            <button class="j1-apply" onclick="applyJ1()">✅ Pré-remplir demain</button>
+            <button class="j1-dismiss" onclick="dismissJ1()">Plus tard</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-card">
+        <div class="p-daterow">
+          <div style="flex:1"><div class="p-slbl">📅 Journée de Louise</div><div class="p-datebig" id="saisieDate"></div></div>
+          <input type="date" id="datePicker" onchange="onDateChange(this.value)"/>
+          <span class="ppill ppill-s" id="savedPill" style="display:none">✓ Enregistré</span>
+        </div>
+      </div>
+
+      <div class="p-diffalert" id="diffAlert" style="display:none">
+        <strong style="color:var(--p-warning)">⚡ Modifications vs journée précédente :</strong>
+        <div class="p-diffchips" id="diffChips"></div>
+      </div>
+
+      <div class="p-slotstable">
+        <div class="p-slotshead"><div>Heure</div><div>Basal U/h</div><div>Ratio 1U/Xg</div><div>Événement</div></div>
+        <div id="slotsBody"></div>
+      </div>
+
+      <div class="p-card">
+        <div class="p-slbl">🔧 Changement Matériel</div>
+        <div class="p-matgrid" id="matGrid"></div>
+        <textarea class="p-textarea" id="matNotes" rows="2" placeholder="Notes sur le changement de matériel…"></textarea>
+      </div>
+      <div class="p-card">
+        <div class="p-slbl">📝 Notes de la journée</div>
+        <textarea class="p-textarea" id="globalNotes" rows="3" placeholder="Observations glycémiques, comportement, contexte…"></textarea>
+      </div>
+      <button class="p-savebtn" id="saveBtn" onclick="saveDay()">💾 Enregistrer la journée de Louise</button>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div id="pv-historique" class="p-tabcontent" style="display:none">
+      <div style="font-size:13px;color:var(--p-soft);margin-bottom:14px">💉 Louise · <span id="histCount"></span></div>
+      <div id="histList"></div>
+    </div>
+
+    <!-- COMPARAISON -->
+    <div id="pv-comparaison" class="p-tabcontent" style="display:none">
+      <div class="p-card">
+        <div class="p-slbl">🔍 Comparer les réglages</div>
+        <p style="font-size:13px;color:var(--p-soft);margin-bottom:10px">Sélectionne une journée pour voir les changements vs la précédente.</p>
+        <select class="p-select" id="cmpSelect" onchange="renderCompare()"><option value="">-- Choisir une journée --</option></select>
+      </div>
+      <div id="cmpResult"></div>
+    </div>
+
+    <!-- RAPPELS -->
+    <div id="pv-rappels" class="p-tabcontent" style="display:none">
+      <div class="p-card al">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="p-ricon" style="background:var(--p-primary-light)">🔵</div>
+          <div><div style="font-size:16px;font-weight:800;color:var(--p-primary)">En cas d'Hypoglycémie</div><div style="font-size:12px;color:var(--p-soft)">Dose trop forte → augmenter X du ratio</div></div>
+        </div>
+        <div style="background:var(--p-primary-light);border-radius:10px;padding:13px 14px;margin-bottom:10px">
+          <div class="p-exbox" style="color:var(--p-primary)">📌 Exemple : 1U/10g → Hypo → 1U/10.5g</div>
+          <div style="font-size:12px;color:var(--p-soft);line-height:1.5;margin-top:6px">Augmenter X réduit la dose d'insuline par gramme de glucides.</div>
+        </div>
+        <span class="p-tbadge">⏰ Modification à appliquer J+1 ✓</span>
+      </div>
+      <div class="p-card al hyper-c">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="p-ricon" style="background:var(--p-accent-light)">🔴</div>
+          <div><div style="font-size:16px;font-weight:800;color:var(--p-accent)">En cas d'Hyperglycémie</div><div style="font-size:12px;color:var(--p-soft)">Dose trop faible → réduire X du ratio</div></div>
+        </div>
+        <div style="background:var(--p-accent-light);border-radius:10px;padding:13px 14px;margin-bottom:10px">
+          <div class="p-exbox" style="color:var(--p-accent)">📌 Exemple : 1U/10g → Hyper → 1U/9.5g</div>
+          <div style="font-size:12px;color:var(--p-soft);line-height:1.5;margin-top:6px">Réduire X augmente la dose d'insuline par gramme de glucides.</div>
+        </div>
+        <span class="p-tbadge">⏰ Modification à appliquer J+1 ✓</span>
+      </div>
+      <div class="p-card al bolus-c">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px">
+          <div class="p-ricon" style="background:var(--p-info-light)">🍽️</div>
+          <div><div style="font-size:16px;font-weight:800;color:var(--p-info)">Rappel BOLUS — Incréments</div></div>
+        </div>
+        <div class="p-rulerow" style="background:var(--p-info-light)"><span style="font-family:'DM Mono',monospace;font-size:13px">1U / 1 à 10g</span><span class="p-stepbadge" style="color:var(--p-info);border-color:var(--p-info)">± 0.5</span></div>
+        <div class="p-rulerow"><span style="font-family:'DM Mono',monospace;font-size:13px">1U / 10 à 20g</span><span class="p-stepbadge" style="color:var(--p-info);border-color:var(--p-info)">± 1</span></div>
+        <div class="p-rulerow" style="background:var(--p-info-light)"><span style="font-family:'DM Mono',monospace;font-size:13px">1U / 20 à 40g</span><span class="p-stepbadge" style="color:var(--p-info);border-color:var(--p-info)">± 5</span></div>
+        <div class="p-rulerow"><span style="font-family:'DM Mono',monospace;font-size:13px">1U / 40g et +</span><span class="p-stepbadge" style="color:var(--p-info);border-color:var(--p-info)">± 15</span></div>
+      </div>
+      <div class="p-card al basal-c">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px">
+          <div class="p-ricon" style="background:var(--p-warning-light)">⏱️</div>
+          <div><div style="font-size:16px;font-weight:800;color:var(--p-warning)">Rappel BASAL — Incréments</div></div>
+        </div>
+        <div class="p-rulerow" style="background:var(--p-warning-light)"><span style="font-size:13px">Débit &lt; 0.4 U/h</span><span class="p-stepbadge" style="color:var(--p-warning);border-color:var(--p-warning)">± 0.025</span></div>
+        <div class="p-rulerow"><span style="font-size:13px">Débit 0.45 à 0.8 U/h</span><span class="p-stepbadge" style="color:var(--p-warning);border-color:var(--p-warning)">± 0.05</span></div>
+        <div class="p-rulerow" style="background:var(--p-warning-light)"><span style="font-size:13px">Débit &gt; 0.8 U/h</span><span class="p-stepbadge" style="color:var(--p-warning);border-color:var(--p-warning)">± 0.1</span></div>
+      </div>
+    </div>
+
+    <!-- PARAMÈTRES -->
+    <div id="pv-parametres" class="p-tabcontent" style="display:none">
+      <div class="p-card">
+        <div class="p-slbl">⏰ Créneaux horaires</div>
+        <p style="font-size:13px;color:var(--p-soft);margin-bottom:14px">Personnalise les horaires affichés dans la saisie.</p>
+        <div id="slotManageList"></div>
+        <div class="p-addrow">
+          <div><div class="p-slbl">Ajouter un créneau</div><input type="time" id="newSlotInp" value="06:00"/></div>
+          <button class="p-addbtn" onclick="addSlot()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="p-infobox">💡 Les horaires s'appliquent aux nouvelles saisies. Supprimer un horaire ne supprime pas les données déjà enregistrées.</div>
+      <div class="p-dangerbox">
+        <div class="p-slbl">⚠️ Réinitialisation des horaires</div>
+        <p style="font-size:13px;color:var(--p-soft);margin-bottom:12px">Remettre les 9 horaires par défaut.</p>
+        <button class="p-resetbtn" onclick="resetSlots()">🔄 Horaires par défaut</button>
+      </div>
+      <div class="p-dangerbox" style="border-color:#ccc;margin-top:10px">
+        <div class="p-slbl">🗑️ Supprimer toutes les données pompe</div>
+        <button class="p-resetbtn" style="border-color:#999;color:#666" onclick="clearPompeData()">🗑️ Tout supprimer</button>
+      </div>
+    </div>
+
+  </div><!-- /p-main -->
+</div><!-- /app-pompe -->
 <!-- MODAL AJOUT -->
 <div class="modal-overlay" id="modal-add" onclick="closeModalOnBackdrop(event,'modal-add')">
   <div class="modal">
@@ -606,7 +1013,61 @@ nav{display:flex;background:#fff;border-bottom:3px solid var(--bg);position:stic
   </div>
 </div>
 
+
+
 <script>
+// ════════════════════════════════════════════════
+//  NAVIGATION GLOBALE
+// ════════════════════════════════════════════════
+function openApp(name){
+  document.querySelectorAll('.app-root').forEach(v=>v.classList.remove('active'));
+  document.getElementById('app-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='pompe') initPompe();
+  if(name==='gk') showPage('journal');
+}
+function goHome(){
+  document.querySelectorAll('.app-root').forEach(v=>v.classList.remove('active'));
+  document.getElementById('app-home').classList.add('active');
+  window.scrollTo(0,0);
+  refreshHomeStats();
+}
+function refreshHomeStats(){
+  // Étoiles
+  const bg=document.getElementById('homeBg');
+  if(!bg.querySelector('.hstar')){
+    [[12,18,6],[55,30,4],[80,12,7],[30,40,5],[90,35,8],[45,15,5],[70,45,4]].forEach(([x,y,s])=>{
+      const el=document.createElement('div');el.className='hstar';
+      el.style.cssText=`left:${x}%;top:${y}%;width:${s}px;height:${s}px;animation-delay:${Math.random()*2}s`;
+      bg.appendChild(el);
+    });
+  }
+  // Glucides aujourd'hui (GlucoKid)
+  try{
+    const j=JSON.parse(localStorage.getItem('glucokid_journal_v2')||'{}');
+    const today=new Date().toISOString().slice(0,10);
+    const e=j[today]||{matin:[],midi:[],soir:[],collation:[]};
+    const tot=Math.round([...e.matin,...e.midi,...e.soir,...e.collation].reduce((s,x)=>s+x.glucTotal,0));
+    document.getElementById('statGlucToday').textContent=tot>0?tot+'g':'–';
+  }catch(e){document.getElementById('statGlucToday').textContent='–';}
+  // Pompe stats
+  try{
+    const entries=JSON.parse(localStorage.getItem('louise_pump_entries_v2')||'[]');
+    const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date));
+    document.getElementById('statJours').textContent=entries.length;
+    if(sorted.length){
+      const d=sorted[0].date;const[y,m,dd]=d.split('-');
+      const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+      const dt=new Date(+y,+m-1,+dd);
+      document.getElementById('statLastEntry').textContent=days[dt.getDay()]+' '+parseInt(dd);
+    } else document.getElementById('statLastEntry').textContent='–';
+    // Suggestions J+1 en attente
+    let j1count=0;
+    sorted.slice(0,3).forEach(e=>{const s=pComputeJ1(e);j1count+=s.length;});
+    document.getElementById('statJ1').textContent=j1count>0?j1count+'':'–';
+  }catch(e){document.getElementById('statJours').textContent='0';}
+}
+
 // ── CONSTANTS ─────────────────────────────────────────────────
 const JOURNAL_KEY='glucokid_journal_v2';
 const SETTINGS_KEY='glucokid_settings_v2';
@@ -2569,6 +3030,433 @@ function initPWA(){
     document.body.appendChild(banner);
   }
 }
+
+// ════════════════════════════════════════════════
+//  POMPE — CONFIGURATION DROPDOWNS
+// ════════════════════════════════════════════════
+const POMPE_CFG = {
+  basal: {min:0, max:1, step:0.025, dec:3},
+  ratio: {min:0.5, max:40, step:0.5, dec:1}
+};
+
+// Génère les <option> pour un select pompe
+function pompeGenOpts(cfg, selected){
+  let out='<option value="">–</option>';
+  for(let v=cfg.min; v<=cfg.max+0.00001; v+=cfg.step){
+    const val=v.toFixed(cfg.dec);
+    out+=`<option value="${val}"${val===selected?' selected':''}>${val}</option>`;
+  }
+  return out;
+}
+
+// Snape une valeur vers l'option valide la plus proche
+function snapToOption(cfg, value){
+  const steps=Math.round((value-cfg.min)/cfg.step);
+  const snapped=cfg.min+steps*cfg.step;
+  const clamped=Math.max(cfg.min,Math.min(cfg.max,snapped));
+  return clamped.toFixed(cfg.dec);
+}
+
+// Normalise virgule→point (migration données anciennes)
+function normVal(v){ return v?v.toString().replace(',','.'):v; }
+
+// ════════════════════════════════════════════════
+//  POMPE — CONSTANTES
+// ════════════════════════════════════════════════
+const DAYS_FR   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MONTHS_FR = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+const DEFAULT_SLOTS = ['00:00','04:00','07:00','08:00','11:00','12:00','15:00','18:30','21:30'];
+const MAT_FIELDS    = ['Cathéter','Insuline','Réservoir','Capteur','Récepteur'];
+const EVENT_OPTS = [
+  {v:'',label:'— RAS —'},{v:'hypo',label:'🔵 Hypo'},{v:'hyper',label:'🔴 Hyper'},
+  {v:'hypo basal',label:'🔵 Hypo Basal'},{v:'hyper basal',label:'🔴 Hyper Basal'},
+  {v:'correctif',label:'💊 Correctif'},{v:'sport',label:'🏃 Sport'},
+  {v:'maladie',label:'🤒 Maladie'},{v:'repas riche',label:'🍕 Repas riche'},
+];
+const PSK = {
+  entries:'louise_pump_entries_v2',
+  slots:'louise_pump_slots_v2',
+};
+
+// ════════════════════════════════════════════════
+//  POMPE — ÉTAT
+// ════════════════════════════════════════════════
+let pompeSlots=[];
+let pompeEntries=[];
+let pCurrent=null;
+let pendingJ1=[];
+
+// ════════════════════════════════════════════════
+//  POMPE — HELPERS
+// ════════════════════════════════════════════════
+function pSv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function pLd(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+function pEscH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function pDateFR(d){if(!d)return'';const[y,m,dd]=d.split('-');const dt=new Date(+y,+m-1,+dd);return`${DAYS_FR[dt.getDay()]} ${parseInt(dd)} ${MONTHS_FR[+m-1]} ${y}`}
+function pToday(){return new Date().toISOString().slice(0,10)}
+function pAddDay(s,n){const d=new Date(s);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function pToNum(s){return parseFloat(normVal(s)||0)||0}
+function pRatioStep(x){return x<=10?.5:x<=20?1:x<=40?5:15}
+function pBasalStep(b){return b<.4?.025:b<=.8?.05:.1}
+
+function pEmptyDay(date){
+  return{id:Date.now().toString(),date:date||pToday(),
+    slots:pompeSlots.map(t=>({time:t,basal:'',ratio:'',infos:''})),
+    materiel:Object.fromEntries(MAT_FIELDS.map(f=>[f,false])),
+    materielNotes:'',globalNotes:'',createdAt:new Date().toISOString()};
+}
+function pSorted(){return[...pompeEntries].sort((a,b)=>b.date.localeCompare(a.date))}
+function pPrev(date){return pSorted().find(e=>e.date<date)||null}
+function pDiffs(prev,curr){
+  if(!prev)return[];const d=[];
+  curr.slots.forEach(s=>{
+    const p=prev.slots.find(x=>x.time===s.time);if(!p)return;
+    if(s.basal&&s.basal!==p.basal)d.push({time:s.time,field:'Basal',from:p.basal,to:s.basal});
+    if(s.ratio&&s.ratio!==p.ratio)d.push({time:s.time,field:'Ratio',from:p.ratio,to:s.ratio});
+  });return d;
+}
+
+// ════════════════════════════════════════════════
+//  POMPE — INIT
+// ════════════════════════════════════════════════
+function initPompe(){
+  pompeSlots=pLd(PSK.slots)||DEFAULT_SLOTS;
+  pompeEntries=(pLd(PSK.entries)||[]).map(e=>({
+    ...e,slots:e.slots.map(s=>({...s,basal:normVal(s.basal),ratio:normVal(s.ratio)}))
+  }));
+  const ex=pompeEntries.find(e=>e.date===pToday());
+  pCurrent=ex?{...ex,slots:ex.slots.map(s=>({...s}))}:pEmptyDay(pToday());
+  pRenderBadge();pRenderBanner();pRenderSaisie();
+  switchPompe('saisie');
+}
+
+function pRenderBadge(){
+  const s=pSorted();
+  document.getElementById('pompeBadgeNum').textContent=s.length;
+  document.getElementById('pompeBadgeS').textContent=s.length>1?'s':'';
+  document.getElementById('pompeSub').textContent=pDateFR(pToday());
+}
+function pRenderBanner(){
+  const s=pSorted();const el=document.getElementById('pompeBanner');
+  if(!s.length){el.style.display='none';return;}
+  const last=s[0];const d=pDiffs(s[1]||null,last);
+  const mat=MAT_FIELDS.filter(f=>last.materiel[f]);
+  const j1s=pComputeJ1(last);
+  let html=`<span>Dernière saisie :</span><span style="font-weight:800;color:var(--p-primary)">${pDateFR(last.date)}</span>`;
+  if(d.length)html+=`<span class="ppill ppill-w">⚡ ${d.length} modif.</span>`;
+  if(j1s.length)html+=`<span class="ppill ppill-pk">✨ ${j1s.length} sugg. J+1</span>`;
+  mat.forEach(m=>{html+=`<span class="ppill ppill-a">${m} changé</span>`;});
+  el.innerHTML=html;el.style.display='flex';
+}
+
+// ════════════════════════════════════════════════
+//  POMPE — TABS
+// ════════════════════════════════════════════════
+function switchPompe(tab){
+  ['saisie','historique','comparaison','rappels','parametres'].forEach(t=>{
+    document.getElementById('pv-'+t).style.display=t===tab?'':'none';
+    document.getElementById('ptab-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='historique')  pRenderHistorique();
+  if(tab==='comparaison') pRenderCmpSelect();
+  if(tab==='parametres')  pRenderSlotManage();
+}
+
+// ════════════════════════════════════════════════
+//  POMPE — SAISIE
+// ════════════════════════════════════════════════
+function pRenderSaisie(){
+  document.getElementById('datePicker').value=pCurrent.date;
+  document.getElementById('saisieDate').textContent=pDateFR(pCurrent.date);
+  document.getElementById('savedPill').style.display=pompeEntries.find(e=>e.date===pCurrent.date)?'':'none';
+  const prev=pPrev(pCurrent.date);
+  const diffs=pDiffs(prev,pCurrent);
+  const da=document.getElementById('diffAlert');
+  if(diffs.length){
+    da.style.display='';
+    document.getElementById('diffChips').innerHTML=diffs.map(d=>`<span class="p-diffchip">${d.time} ${d.field}: <s style="color:#aaa">${d.from||'–'}</s> → <strong>${d.to}</strong></span>`).join('');
+  } else da.style.display='none';
+
+  document.getElementById('slotsBody').innerHTML=pCurrent.slots.map((slot,i)=>{
+    const ps=prev?.slots.find(x=>x.time===slot.time);
+    const bc=ps&&slot.basal&&slot.basal!==ps.basal;
+    const rc=ps&&slot.ratio&&slot.ratio!==ps.ratio;
+    const selClass=slot.infos==='hypo'?'note-sel has-hypo':slot.infos==='hyper'?'note-sel has-hyper':slot.infos==='hypo basal'?'note-sel has-hypo-basal':slot.infos==='hyper basal'?'note-sel has-hyper-basal':'note-sel';
+    const evOpts=EVENT_OPTS.map(o=>`<option value="${o.v}"${slot.infos===o.v?' selected':''}>${o.label}</option>`).join('');
+    return`<div class="p-slotsrow ${(bc||rc)?'changed':''}">
+      <div class="p-timecell">${slot.time}</div>
+      <select class="slot-sel ${bc?'changed':''}" onchange="onSlotInp(${i},'basal',this.value)">${pompeGenOpts(POMPE_CFG.basal,slot.basal)}</select>
+      <select class="slot-sel ${rc?'changed':''}" onchange="onSlotInp(${i},'ratio',this.value)">${pompeGenOpts(POMPE_CFG.ratio,slot.ratio)}</select>
+      <select class="${selClass}" onchange="onSlotInp(${i},'infos',this.value)">${evOpts}</select>
+    </div>`;
+  }).join('');
+
+  document.getElementById('matGrid').innerHTML=MAT_FIELDS.map(f=>`<button class="p-matbtn ${pCurrent.materiel[f]?'on':''}" onclick="toggleMat('${f}')">${pCurrent.materiel[f]?'✓ ':''}${f}</button>`).join('');
+  document.getElementById('matNotes').value=pCurrent.materielNotes||'';
+  document.getElementById('globalNotes').value=pCurrent.globalNotes||'';
+}
+// alias pour compatibilité home stats
+function renderSaisie(){pRenderSaisie();}
+
+function onDateChange(v){
+  const ex=pompeEntries.find(e=>e.date===v);
+  pCurrent=ex?{...ex,slots:ex.slots.map(s=>({...s}))}:pEmptyDay(v);
+  dismissJ1();pRenderSaisie();
+}
+
+function onSlotInp(i,field,val){
+  pCurrent.slots[i][field]=val;
+  if(field==='infos'){
+    const sels=document.querySelectorAll('.note-sel');
+    if(sels[i])sels[i].className=val==='hypo'?'note-sel has-hypo':val==='hyper'?'note-sel has-hyper':val==='hypo basal'?'note-sel has-hypo-basal':val==='hyper basal'?'note-sel has-hyper-basal':'note-sel';
+    if(document.getElementById('j1Panel').style.display!=='none'){const s=pComputeJ1(pCurrent);if(s.length)showJ1Panel(s);else dismissJ1();}
+  }
+  if(field==='basal'||field==='ratio'){
+    const prev=pPrev(pCurrent.date);
+    if(prev){const d=pDiffs(prev,pCurrent);const da=document.getElementById('diffAlert');
+      if(d.length){da.style.display='';document.getElementById('diffChips').innerHTML=d.map(dd=>`<span class="p-diffchip">${dd.time} ${dd.field}: <s style="color:#aaa">${dd.from||'–'}</s> → <strong>${dd.to}</strong></span>`).join('');}
+      else da.style.display='none';}
+  }
+}
+
+function toggleMat(f){
+  pCurrent.materiel[f]=!pCurrent.materiel[f];
+  document.getElementById('matGrid').innerHTML=MAT_FIELDS.map(ff=>`<button class="p-matbtn ${pCurrent.materiel[ff]?'on':''}" onclick="toggleMat('${ff}')">${pCurrent.materiel[ff]?'✓ ':''}${ff}</button>`).join('');
+}
+
+function saveDay(){
+  pCurrent.materielNotes=document.getElementById('matNotes').value;
+  pCurrent.globalNotes=document.getElementById('globalNotes').value;
+  const idx=pompeEntries.findIndex(e=>e.date===pCurrent.date);
+  if(idx>=0)pompeEntries[idx]={...pCurrent,id:pompeEntries[idx].id};
+  else pompeEntries.unshift({...pCurrent,id:Date.now().toString()});
+  pSv(PSK.entries,pompeEntries);
+  pRenderBadge();pRenderBanner();
+  const sugg=pComputeJ1(pCurrent);
+  if(sugg.length)showJ1Panel(sugg);
+  const btn=document.getElementById('saveBtn');
+  btn.className='p-savebtn ok';
+  btn.textContent=sugg.length?`✅ Enregistré · ${sugg.length} suggestion${sugg.length>1?'s':''} J+1 ↑`:'✅ Journée de Louise enregistrée !';
+  document.getElementById('savedPill').style.display='';
+  setTimeout(()=>{if(!pendingJ1.length){btn.className='p-savebtn';btn.textContent='💾 Enregistrer la journée de Louise';}},3000);
+}
+
+// ════════════════════════════════════════════════
+//  POMPE — J+1
+// ════════════════════════════════════════════════
+function pComputeJ1(day){
+  const sugg=[];
+  day.slots.forEach(slot=>{
+    const info=(slot.infos||'').trim();
+    const isHypo=info==='hypo',isHyper=info==='hyper';
+    const isHypoB=info==='hypo basal',isHyperB=info==='hyper basal';
+    if(!isHypo&&!isHyper&&!isHypoB&&!isHyperB)return;
+    // Ratio (hypo/hyper repas)
+    if((isHypo||isHyper)&&slot.ratio){
+      const x=pToNum(slot.ratio);if(!x||x<=0)return;
+      const step=pRatioStep(x);
+      const newX=isHypo?x+step:x-step;
+      if(newX>0){
+        const snapped=snapToOption(POMPE_CFG.ratio,newX);
+        sugg.push({time:slot.time,field:'ratio',label:'Ratio 1U/Xg',from:slot.ratio,to:snapped,reason:isHypo?'hypo':'hyper',explain:isHypo?`Hypo → X +${step} (dose réduite)`:`Hyper → X -${step} (dose augmentée)`});
+      }
+    }
+    // Basal (hypo/hyper basal)
+    if((isHypoB||isHyperB)&&slot.basal){
+      const b=pToNum(slot.basal);if(!b||b<=0)return;
+      const step=pBasalStep(b);
+      const newB=isHypoB?b-step:b+step;
+      if(newB>0){
+        const snapped=snapToOption(POMPE_CFG.basal,newB);
+        sugg.push({time:slot.time,field:'basal',label:'Basal U/h',from:slot.basal,to:snapped,reason:isHypoB?'hypo':'hyper',explain:isHypoB?`Hypo basal → débit -${step}`:`Hyper basal → débit +${step}`});
+      }
+    }
+  });
+  return sugg;
+}
+
+function showJ1Panel(sugg){
+  pendingJ1=sugg;
+  document.getElementById('j1Suggestions').innerHTML=sugg.map(s=>`
+    <div class="j1-row ${s.reason}-r">
+      <span class="j1-t">${s.time}</span>
+      <span class="j1-f">${s.label}</span>
+      <span class="j1-from">${pEscH(s.from)}</span>
+      <span style="color:var(--p-soft);font-size:16px">→</span>
+      <span class="j1-to ${s.reason}">${pEscH(s.to)}</span>
+      <span class="j1-reason ${s.reason}">${s.reason}</span>
+      <span style="font-size:11px;color:var(--p-soft);width:100%;margin-top:2px">${pEscH(s.explain)}</span>
+    </div>`).join('');
+  document.getElementById('j1Panel').style.display='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function dismissJ1(){document.getElementById('j1Panel').style.display='none';pendingJ1=[];}
+
+function applyJ1(){
+  if(!pendingJ1.length)return;
+  const tmr=pAddDay(pCurrent.date,1);
+  let t=pompeEntries.find(e=>e.date===tmr);
+  if(t){t={...t,slots:t.slots.map(s=>({...s}))}}
+  else{
+    t=pEmptyDay(tmr);
+    t.slots=pompeSlots.map(ts=>{const ex=pCurrent.slots.find(s=>s.time===ts);return{time:ts,basal:ex?.basal||'',ratio:ex?.ratio||'',infos:''};});
+  }
+  pendingJ1.forEach(s=>{const sl=t.slots.find(x=>x.time===s.time);if(sl)sl[s.field]=s.to;});
+  t.globalNotes=`Pré-rempli J+1 depuis ${pDateFR(pCurrent.date)}`;
+  const idx=pompeEntries.findIndex(e=>e.date===tmr);
+  if(idx>=0)pompeEntries[idx]=t;else pompeEntries.unshift(t);
+  pSv(PSK.entries,pompeEntries);
+  pCurrent=t;dismissJ1();pRenderSaisie();pRenderBadge();pRenderBanner();
+  const btn=document.getElementById('saveBtn');
+  btn.className='p-savebtn ok';btn.textContent='✅ Demain pré-rempli !';
+  setTimeout(()=>{btn.className='p-savebtn';btn.textContent='💾 Enregistrer la journée de Louise';},3000);
+}
+
+// ════════════════════════════════════════════════
+//  POMPE — HISTORIQUE
+// ════════════════════════════════════════════════
+function pRenderHistorique(){
+  const s=pSorted();
+  document.getElementById('histCount').textContent=`${s.length} journée${s.length>1?'s':''} enregistrée${s.length>1?'s':''}`;
+  const list=document.getElementById('histList');
+  if(!s.length){list.innerHTML='<div class="p-empty"><div style="font-size:44px;margin-bottom:12px">📋</div><div>Aucune journée enregistrée.</div></div>';return;}
+  list.innerHTML=s.map((entry,idx)=>{
+    const prev=s[idx+1]||null;const d=pDiffs(prev,entry);
+    const mat=MAT_FIELDS.filter(f=>entry.materiel[f]);
+    const j1=pComputeJ1(entry);
+    const mini=entry.slots.filter(sl=>sl.basal||sl.ratio).map(sl=>{
+      const ps=prev?.slots.find(p=>p.time===sl.time);
+      const ch=ps&&(ps.basal!==sl.basal||ps.ratio!==sl.ratio);
+      return`<div class="p-slotmini ${ch?'changed':''}"><div class="st">${sl.time}</div>${sl.basal?`<div class="sv">B:${sl.basal}</div>`:''}${sl.ratio?`<div class="sv">R:${sl.ratio}</div>`:''}</div>`;
+    }).join('');
+    const pills=mat.map(m=>`<span class="ppill ppill-a">${m}</span>`).join('')+(j1.length?`<span class="ppill ppill-pk">✨${j1.length} J+1</span>`:'');
+    const note=entry.globalNotes?`<div class="p-histnote">"${entry.globalNotes.slice(0,90)}${entry.globalNotes.length>90?'…':''}"</div>`:'';
+    const bclass=j1.length?'has-j1':d.length?'has-diffs':'';
+    return`<div class="p-histitem ${bclass}" onclick="loadPompeEntry('${entry.id}')">
+      <div class="p-histtop">
+        <div><div class="p-histdate">${pDateFR(entry.date)}</div>${d.length?`<div class="p-histmods">⚡ ${d.length} modification${d.length>1?'s':''}</div>`:''}</div>
+        <div class="p-histpills">${pills}</div>
+      </div>
+      <div class="p-slotsmini">${mini}</div>${note}
+    </div>`;
+  }).join('');
+}
+
+function loadPompeEntry(id){
+  const e=pompeEntries.find(x=>x.id===id);if(!e)return;
+  pCurrent={...e,slots:e.slots.map(s=>({...s}))};
+  dismissJ1();pRenderSaisie();switchPompe('saisie');window.scrollTo(0,0);
+}
+
+// ════════════════════════════════════════════════
+//  POMPE — COMPARAISON
+// ════════════════════════════════════════════════
+function pRenderCmpSelect(){
+  const s=pSorted();
+  document.getElementById('cmpSelect').innerHTML=`<option value="">-- Choisir --</option>`+s.map(e=>`<option value="${e.id}">${pDateFR(e.date)}</option>`).join('');
+  document.getElementById('cmpResult').innerHTML='';
+}
+function renderCompare(){
+  const id=document.getElementById('cmpSelect').value;const res=document.getElementById('cmpResult');
+  if(!id){res.innerHTML='';return;}
+  const s=pSorted();const sel=s.find(e=>e.id===id);const idx=s.indexOf(sel);const prev=s[idx+1]||null;
+  if(!prev){res.innerHTML='<div class="p-card"><p style="text-align:center;color:var(--p-soft);font-size:13px">Pas de journée précédente.</p></div>';return;}
+  const d=pDiffs(prev,sel);const mat=MAT_FIELDS.filter(f=>sel.materiel[f]);
+  const dHtml=d.length===0?`<div class="p-nodiffs">✅ Aucun changement entre ces deux journées.</div>`:
+    `<div class="p-slbl" style="margin-bottom:10px">⚡ ${d.length} modification${d.length>1?'s':''}</div>`+d.map(dd=>`<div class="p-diffrow"><span class="dr-time">${dd.time}</span><span class="dr-field">${dd.field}</span><span class="dr-from">${pEscH(dd.from)||'–'}</span><span style="color:var(--p-warning);font-size:18px">→</span><span class="dr-to">${pEscH(dd.to)}</span></div>`).join('');
+  const mHtml=mat.length?`<div style="margin-top:12px"><div class="p-slbl">🔧 Matériel changé</div><div style="display:flex;gap:6px;flex-wrap:wrap">${mat.map(f=>`<span class="ppill ppill-a">${f}</span>`).join('')}</div></div>`:'';
+  const nHtml=sel.globalNotes?`<div style="margin-top:12px;background:var(--p-bg);border-radius:9px;padding:10px 14px;font-size:13px;color:var(--p-soft);font-style:italic">📝 "${sel.globalNotes}"</div>`:'';
+  res.innerHTML=`<div class="p-card" style="padding:0;overflow:hidden">
+    <div class="p-cmphead">
+      <div class="p-cmpcol"><div class="cl">De</div><div class="cv">${pDateFR(prev.date)}</div></div>
+      <div style="font-size:22px;opacity:.4">→</div>
+      <div class="p-cmpcol"><div class="cl">À</div><div class="cv">${pDateFR(sel.date)}</div></div>
+    </div>
+    <div style="padding:14px">${dHtml}${mHtml}${nHtml}</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════
+//  POMPE — PARAMÈTRES CRÉNEAUX
+// ════════════════════════════════════════════════
+function pRenderSlotManage(){
+  document.getElementById('slotManageList').innerHTML=pompeSlots.map(t=>`
+    <div class="p-slotmanrow">
+      <div class="p-sml"><div class="p-smdot"></div><span class="p-smt">${t}</span></div>
+      <button class="p-delbtn" onclick="removeSlot('${t}')">✕ Supprimer</button>
+    </div>`).join('');
+}
+function addSlot(){
+  const v=document.getElementById('newSlotInp').value;
+  if(!v||pompeSlots.includes(v)){alert(pompeSlots.includes(v)?'Ce créneau existe déjà !':'Sélectionne un horaire.');return;}
+  pompeSlots=[...pompeSlots,v].sort();pSv(PSK.slots,pompeSlots);
+  pCurrent.slots=pompeSlots.map(t=>{const ex=pCurrent.slots.find(s=>s.time===t);return ex||{time:t,basal:'',ratio:'',infos:''};});
+  pRenderSlotManage();pRenderSaisie();
+}
+function removeSlot(t){
+  if(pompeSlots.length<=1){alert('Il faut au moins un créneau !');return;}
+  pompeSlots=pompeSlots.filter(s=>s!==t);pSv(PSK.slots,pompeSlots);
+  pCurrent.slots=pCurrent.slots.filter(s=>s.time!==t);pRenderSlotManage();pRenderSaisie();
+}
+function resetSlots(){
+  if(!confirm('Remettre les 9 horaires par défaut ?'))return;
+  pompeSlots=[...DEFAULT_SLOTS];pSv(PSK.slots,pompeSlots);
+  pCurrent.slots=pompeSlots.map(t=>{const ex=pCurrent.slots.find(s=>s.time===t);return ex||{time:t,basal:'',ratio:'',infos:''};});
+  pRenderSlotManage();pRenderSaisie();alert('✅ Horaires réinitialisés !');
+}
+function clearPompeData(){
+  if(!confirm('⚠️ Supprimer TOUT l\'historique pompe ? Action irréversible.'))return;
+  pompeEntries=[];pSv(PSK.entries,[]);pCurrent=pEmptyDay(pToday());
+  dismissJ1();pRenderBadge();pRenderBanner();pRenderSaisie();alert('🗑️ Historique effacé.');
+}
+
+// ════════════════════════════════════════════════
+//  PWA (Louise)
+// ════════════════════════════════════════════════
+function initPWA(){
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+  const ctx=canvas.getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,512,512);
+  grad.addColorStop(0,'#1756a0');grad.addColorStop(1,'#d63f8a');
+  ctx.fillStyle=grad;
+  if(ctx.roundRect)ctx.roundRect(0,0,512,512,100);else ctx.rect(0,0,512,512);
+  ctx.fill();
+  ctx.font='240px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('👧',256,220);
+  ctx.font='bold 56px sans-serif';ctx.fillStyle='#fff';ctx.fillText('Louise',256,420);
+  const iconUrl=canvas.toDataURL('image/png');
+  document.getElementById('apple-icon').href=iconUrl;
+  const manifest={name:'Louise Diabète',short_name:'Louise',description:'Suivi diabète pour Louise',
+    start_url:'.',display:'standalone',orientation:'portrait',background_color:'#edf2f7',theme_color:'#1756a0',lang:'fr',
+    icons:[{src:iconUrl,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  document.getElementById('pwa-manifest').href=URL.createObjectURL(blob);
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(isIOS&&!isStandalone){setTimeout(()=>{
+    if(document.getElementById('install-banner'))return;
+    const b=document.createElement('div');b.id='install-banner';
+    b.style.cssText='position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1756a0,#d63f8a);color:#fff;padding:14px 16px;z-index:999;box-shadow:0 -4px 20px rgba(0,0,0,.25);font-family:Nunito,sans-serif;border-radius:20px 20px 0 0';
+    b.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:800;font-size:15px">📲 Installer sur iPhone</div><button onclick="this.closest('#install-banner').remove()" style="background:rgba(255,255,255,.25);border:none;border-radius:8px;color:#fff;padding:5px 11px;font-weight:800;cursor:pointer">✕</button></div><div style="font-size:13px;line-height:2;opacity:.92">1. Appuie sur <strong>⬆️ Partager</strong><br>2. Choisis <strong>"Sur l'écran d'accueil"</strong><br>3. Appuie sur <strong>Ajouter</strong> 🎉</div>`;
+    document.body.appendChild(b);setTimeout(()=>b?.remove(),14000);
+  },2500);}
+}
+
+// ════════════════════════════════════════════════
+//  DÉMARRAGE
+// ════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  // Init GlucoKid date display
+  document.getElementById('header-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+  // Init GlucoKid
+  renderJournal(); renderCatChips(); renderResults();
+  // Init home stats
+  refreshHomeStats();
+  // PWA
+  initPWA();
+});
 </script>
 </body>
 </html>
